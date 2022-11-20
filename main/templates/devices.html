@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block text %}
+<h1>home: flat u24</h1>
+<h2>room: Прихожая</h2>
+
+<div class="container">
+    <div class="row">
+        <div class="card col-3">
+            <div class="card-body">
+                <h5 class="card-title">Диммер Люстра</h5>
+                <p class="card-text">
+                    Диммер Люстра
+                    <br/>
+                    UID: {{ user.socialaccount_set.all.0.uid }}
+                    <br/>
+                    Date Joined: {{ user.socialaccount_set.all.0.date_joined}}
+                    <br/>
+                    Last Login: {{ user.socialaccount_set.all.0.last_login}}
+                </p>
+            </div>
+        </div>
+        <div class="card col-3">
+            <div class="card-body">
+                <h5 class="card-title">Диммер Люстра</h5>
+                <p class="card-text">
+                    Диммер Люстра
+                    <br/>
+                    UID: {{ user.socialaccount_set.all.0.uid }}
+                    <br/>
+                    Date Joined: {{ user.socialaccount_set.all.0.date_joined}}
+                    <br/>
+                    Last Login: {{ user.socialaccount_set.all.0.last_login}}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

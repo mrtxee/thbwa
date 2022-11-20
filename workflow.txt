@@ -1,0 +1,20 @@
+Какой сценарий работы:
+1) получить список домов этого пользователя и загрузить его в django
+2) по для каждого дома загрузить список комнат
+3) по каждой комнате загрузить девайсы
+
+Как должно работать
+Кнопка -> значок лоадер -> сообщение об успехе
+Кнопка: событие в react, которое вызывает по GET api /api/v1.0/update_devices
+
+Кнопка:
+
+Методы рест-апи, которые перекачивают данные из tuya в ldb
+/api/v1.0/truncate_devices/<UID>
+/api/v1.0/update_devices/<UID>
+/api/v1.0/load_homes/<UID>
+/api/v1.0/load_rooms/<home_id>
+/api/v1.0/load_room_devices/<room_id>
+/api/v1.0/load_all_devices/<UID>
+другие методы рест-апи
+/api/v1.0/get_devices/<UID>

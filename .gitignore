@@ -1,0 +1,6 @@
+db.sqlite3
+.idea
+.git
+**/.git
+**/__pycache__
+node_modules
