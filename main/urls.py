@@ -15,6 +15,6 @@ from . import views
 """
 
 urlpatterns = [
-    path('v1.0/<str:action>/<str:action_id>', views.api, name='api'),
+    path('v1.0/<str:ACTION>/<str:USER_ID>', views.api, name='api'),
     re_path(r'v1.0/*', views.api, name='api'),
 ]

@@ -11,12 +11,36 @@ class TuyaHomes(models.Model):
     payload = models.JSONField()
 
 
-class TuyaRooms(models.Model):
-    pass
-
-
+class TuyaHomeRooms(models.Model):
+    home = models.ForeignKey(TuyaHomes, on_delete=models.CASCADE, null=False, unique=False)
+    room_id = models.PositiveIntegerField(primary_key=True)
+    name = models.CharField(max_length=255, null=True)
+    payload = models.JSONField()
+'''
+    name	"Короб"
+    icon	"smart/device_icon/eu1573240497078AokHW/53436805c44f33b65703162789996802715.png"
+    https://openapi.tuyaeu.com/smart/device_icon/eu1573240497078AokHW/53436805c44f33b65703162789996802715.png
+    https://images.tuyaeu.com/ smart/device_icon/eu1573240497078AokHW/53436805c44f33b65703162789996802715.png
+    local_key	"fc32ae0f50b57f1f"
+    category     "tgq"
+    product_id	"uwajjpe6u24lmjqf"
+    product_name	"Dimmer"
+    owner_id	"14400180"
+    payload min:620
+    room_id FK, null=true
+    uuid	"53436805c44f33b65703" PK
+'''
 class TuyaDevices(models.Model):
-    pass
+    uuid = models.CharField(max_length=64, primary_key=True)
+    room = models.ForeignKey(TuyaHomeRooms, on_delete=models.CASCADE, null=True, unique=False, default=None)
+    owner_id = models.PositiveIntegerField(null=False)
+    name = models.CharField(max_length=255, null=False)
+    icon_url = models.CharField(max_length=255, null=True)
+    category = models.CharField(max_length=255)
+    product_id = models.CharField(max_length=255, null=False)
+    product_name = models.CharField(max_length=255, null=False)
+    local_key = models.CharField(max_length=255, null=False)
+    payload = models.JSONField()
 
 
 TUYA_CLOUD_ENDPOINTS = (
@@ -27,7 +51,6 @@ TUYA_CLOUD_ENDPOINTS = (
     ('openapi-ueaz.tuyaus.com', 'EasternAmerica'),
     ('openapi-weaz.tuyaeu.com', 'WesternEurope'),
 )
-
 
 class UserSettings(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, primary_key=True, on_delete=models.CASCADE)

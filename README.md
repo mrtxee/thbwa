@@ -8,7 +8,7 @@
 обрабатывает URL-path, headers, POST, PULL, GET и передает в контроллер (back-end) 
 ```python
 urlpatterns = [
-    path('v1.0/<str:action>/<str:action_id>', views.api, name='api'),
+    path('v1.0/<str:ACTION>/<str:action_id>', views.api, name='api'),
     re_path(r'v1.0/*', views.api, name='api'),
 ]
 ```

@@ -9,12 +9,11 @@
 
 Кнопка:
 
-Методы рест-апи, которые перекачивают данные из tuya в ldb
-/api/v1.0/truncate_devices/<UID>
-/api/v1.0/update_devices/<UID>
-/api/v1.0/load_homes/<UID>
-/api/v1.0/load_rooms/<home_id>
-/api/v1.0/load_room_devices/<room_id>
-/api/v1.0/load_all_devices/<UID>
-другие методы рест-апи
-/api/v1.0/get_devices/<UID>
+МЕТОДЫ РЕСТ-АПИ РЕЗАЛИЗОВАНЫ:
+методы, которые перекачивают данные из tuya в l_db
+    /api/v1.0/load_homes/<UID>
+    /api/v1.0/load_rooms/<UID>
+    /api/v1.0/load_devices/<UID>
+    /api/v1.0/set_device_rooms/<UID>
+методы, которые передают данные во фронтэнд
+    /api/v1.0/get_devices/<UID>
