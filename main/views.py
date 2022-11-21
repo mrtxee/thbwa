@@ -1,9 +1,7 @@
 import json
 import logging
-from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import render
-
 import tuyacloud
 from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices
 
@@ -24,7 +22,7 @@ def api(request, ACTION=None, USER_ID=None):
         case "load_homes":
             result['log']['msgs'].append(f"do {ACTION} for {USER_ID}")
             try:
-                tcc = get_tcc(USER_ID)
+                tcc = get_TuyaCloudClient(USER_ID)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['log']['msgs'].append(f"Exception: {str(e)}")
@@ -53,7 +51,7 @@ def api(request, ACTION=None, USER_ID=None):
                 result['log']['msgs'].append(f"no homes found")
                 return JsonResponse(result)
             try:
-                tcc = get_tcc(USER_ID)
+                tcc = get_TuyaCloudClient(USER_ID)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['log']['msgs'].append(f"Exception: {str(e)}")
@@ -74,7 +72,7 @@ def api(request, ACTION=None, USER_ID=None):
         case "load_devices":
             result['log']['msgs'].append(f"do {ACTION} for {USER_ID}")
             try:
-                tcc = get_tcc(USER_ID)
+                tcc = get_TuyaCloudClient(USER_ID)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['log']['msgs'].append(f"Exception: {str(e)}")
@@ -99,7 +97,7 @@ def api(request, ACTION=None, USER_ID=None):
                 result['log']['msgs'].append(f"no roomes found")
                 return JsonResponse(result)
             try:
-                tcc = get_tcc(USER_ID)
+                tcc = get_TuyaCloudClient(USER_ID)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['log']['msgs'].append(f"Exception: {str(e)}")
@@ -131,15 +129,24 @@ def api(request, ACTION=None, USER_ID=None):
     return JsonResponse(result)
 
 
-def get_tcc(uid: int):
-    # todo : make it singleton
+def singleton(class_):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return getinstance
+@singleton
+class TuyaCloudClientNicerSingleton(tuyacloud.TuyaCloudClientNicer):
+    pass
+
+def get_TuyaCloudClient(uid: int) -> object:
     if 1 != UserSettings.objects.filter(pk=uid).count():
         raise TypeError("bad settings provided")
 
     user_settings = UserSettings.objects.filter(pk=uid).values()[0]
-
     try:
-        tcc = tuyacloud.TuyaCloudClientNicer(
+        tcc = TuyaCloudClientNicerSingleton(
             ACCESS_ID=user_settings['access_id'],
             ACCESS_SECRET=user_settings['access_secret'],
             UID=user_settings['uid'],
@@ -185,12 +192,8 @@ def user_playground(request):
         # context['settings'] = serializers.serialize('json', [ settings ])
         context['settings'] = f'SETTINGS: {str(settings_dict)}'
 
-        tcc = tuyacloud.TuyaCloudClientNicer(
-            ACCESS_ID="4fuehnegqrfqspnpymn9",
-            ACCESS_SECRET="5bb653adee024441aa74fc49f50b6727",
-            UID="eu1573240497078AokHW",
-            ENDPOINT_URL="openapi.tuyaeu.com"
-        )
+        tcc = get_TuyaCloudClient(4)
+
         result = tcc.get_user_homes()
         print("get_user_homes:\n", json.dumps(result, indent=3, ensure_ascii=False))
     else:
