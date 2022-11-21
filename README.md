@@ -1,6 +1,19 @@
 # thbwa
  TuyaHomeBot Web Application
 
+## RestApi
+методы, которые перекачивают данные из tuya в l_db:
+
+    /api/v1.0/load_homes/<UID>
+    /api/v1.0/load_rooms/<UID>
+    /api/v1.0/load_devices/<UID>
+    /api/v1.0/set_device_rooms/<UID>
+методы, которые передают данные во фронтэнд:
+
+    /api/v1.0/get_devices/<UID>
+
+
+
 ## Текущие вопросы ХарпСергу:
 
 По Django framework у нас следующая структура:
