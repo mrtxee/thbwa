@@ -4,14 +4,21 @@
 ## RestApi
 методы, которые перекачивают данные из tuya в l_db:
 
-    /api/v1.0/load_homes/<UID>
+    GET: /api/v1.0/load_homes/<UID>
+    #PATCH: /api/v1.0/homes + с авторизацией
     /api/v1.0/load_rooms/<UID>
     /api/v1.0/load_devices/<UID>
     /api/v1.0/set_device_rooms/<UID>
 методы, которые передают данные во фронтэнд:
 
-    /api/v1.0/get_devices/<UID>
+    GET: /api/v1.0/get_devices/<UID>
+    #GET: /api/v1.0/devices + с авторизацией
+    auth2
 
+'''
+    #todo : потом когда-нибудь сделать авторизацию
+    авторизацию вместо UID
+'''
 
 
 ## Текущие вопросы ХарпСергу:
