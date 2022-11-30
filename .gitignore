@@ -1,5 +1,6 @@
 db.sqlite3
 **/migrations
+**/migrations/*
 .idea
 .git
 **/.git
