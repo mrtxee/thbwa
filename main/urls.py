@@ -3,12 +3,12 @@ from django.urls import path, re_path
 from . import views
 
 """
-    /api/v1.0/truncate_devices/<UID>
-    /api/v1.0/reload_devices/<UID>
+    -/api/v1.0/truncate_devices/<UID>
+    -/api/v1.0/reload_devices/<UID>
     /api/v1.0/load_homes/<UID>
-    /api/v1.0/load_rooms/<home_id>
-    /api/v1.0/load_room_devices/<room_id>
-    /api/v1.0/load_all_devices/<UID>
+    /api/v1.0/load_rooms/<UID>
+    /api/v1.0/load_devices/<UID>
+    /api/v1.0/set_device_rooms/<UID>
     другие методы рест-апи
     /api/v1.0/get_devices/<UID>
     
