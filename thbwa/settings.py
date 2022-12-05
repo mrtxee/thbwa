@@ -24,8 +24,13 @@ SECRET_KEY = 'django-insecure-=z^o$spdg7a6$p!smi9vv49s9_0^3*ko%y(uu#2*6h1uf%*j!m
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+CORS_ORIGIN_ALLOW_ALL = True
 
-ALLOWED_HOSTS = []
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1:3000',
+]
+
+#ALLOWED_HOSTS = ['127.0.0.1:3000']
 
 
 # Application definition
@@ -44,7 +49,9 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'django_bootstrap5'
+    'django_bootstrap5',
+
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -55,6 +62,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+
 ]
 
 ROOT_URLCONF = 'thbwa.urls'
