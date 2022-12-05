@@ -9,7 +9,7 @@ from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, Tu
 
 # noinspection DuplicatedCode
 def api(request, ACTION=None, USER_ID=None):
-    result = {'success': True, 'msgs': [], 'data': {}}
+    result = {'success': True, 'msgs': [], 'data': []}
     if not ACTION or not USER_ID:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -18,6 +18,11 @@ def api(request, ACTION=None, USER_ID=None):
         result['msgs'].append(f"do {ACTION} for {USER_ID}")
 
     match ACTION:
+        case "del_homes":
+            TuyaHomes.objects.filter(user=USER_ID).delete()
+            #v = TuyaHomes.objects.filter(user=USER_ID).values()
+            #result['msgs'].append(list(v))
+
         case "load_homes":
             try:
                 tcc = get_TuyaCloudClient(USER_ID)
@@ -25,6 +30,8 @@ def api(request, ACTION=None, USER_ID=None):
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
                 return JsonResponse(result)
+            TuyaHomes.objects.filter(user=USER_ID).delete()
+            result['msgs'].append('homes truncated')
 
             homes = tcc.get_user_homes()
             cols = [f.name for f in TuyaHomes._meta.fields]
@@ -53,6 +60,10 @@ def api(request, ACTION=None, USER_ID=None):
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
                 return JsonResponse(result)
+
+            TuyaHomeRooms.objects.filter(home_id__in=homes).delete()
+            result['msgs'].append('rooms truncated')
+
             for h in homes:
                 home_id = h['home_id']
                 rooms = tcc.get_home_rooms(home_id)['rooms']
@@ -79,14 +90,17 @@ def api(request, ACTION=None, USER_ID=None):
                 row = {k: device[k] for k in cols if k in device}
                 row['icon_url'] = 'https://' + tcc.ENDPOINT_URL.replace('openapi', 'images') + '/' + device['icon']
                 row['payload'] = device
+                row['home_id'] = device['owner_id']
                 obj, is_obj_created = TuyaDevices.objects.update_or_create(
                     pk=device['uuid'], defaults=row
                 )
                 result['msgs'].append(f'record {row["uuid"]} {"created" if is_obj_created else "updated"}')
         case "set_device_rooms":
-            rooms = TuyaHomeRooms.objects.filter(
-                home_id__in=TuyaHomes.objects.filter(user=USER_ID).values('home_id')
-            ).values('room_id', 'home_id')
+            home_ids = TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+            TuyaDevices.objects.filter(home_id__in=home_ids).update(
+                room_id=None)
+            result['msgs'].append(f"'{str(list(home_ids))} house devices set room to null")
+            rooms = TuyaHomeRooms.objects.filter(home_id__in=home_ids).values('room_id', 'home_id')
             if 1 > rooms.count():
                 result['success'] = False
                 result['msgs'].append(f"no rooms found")
@@ -105,6 +119,20 @@ def api(request, ACTION=None, USER_ID=None):
                 result['msgs'].append(f"'{str(room_devices_uuid_list)} set to room {room['room_id']}")
         case "get_devices":
             homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id', 'name', 'geo_name')
+            for home in homes:
+                rooms = TuyaHomeRooms.objects.filter(home_id=home['home_id']).values('home_id', 'room_id', 'name')
+                # home['rooms'] = [rooms[k] for k in range(rooms.count())]
+                home['rooms'] = []
+                for room in rooms:
+                    room['devices'] = list(TuyaDevices.objects.filter(
+                        room_id=room['room_id']
+                    ).values('name', 'icon_url', 'category', 'uuid'))
+
+                    home['rooms'].append(room)
+                result['data'].append(home)
+                result['msgs'].append(home['home_id'])
+        case "get_devices_line":
+            homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id', 'name', 'geo_name')
             homes_ids = [homes[k]['home_id'] for k in range(homes.count())]
             rooms = TuyaHomeRooms.objects.filter(
                 home_id__in=homes_ids
@@ -112,12 +140,13 @@ def api(request, ACTION=None, USER_ID=None):
 
             devices = TuyaDevices.objects.filter(
                 owner_id__in=homes_ids
-            ).values('name', 'icon_url','category','uuid', 'room_id', 'owner_id')
+            ).values('name', 'icon_url', 'category', 'uuid', 'room_id', 'owner_id')
             result['data'] = {
                 'homes': list(homes),
                 'rooms': list(rooms),
                 'devices': list(devices)
             }
+
             result['msgs'].append(f"homes available {homes.count()}")
             result['msgs'].append(f"rooms available {rooms.count()}")
             result['msgs'].append(f"devices available {devices.count()}")
@@ -127,21 +156,25 @@ def api(request, ACTION=None, USER_ID=None):
     return JsonResponse(result)
 
 
-
 # todo: see object_factory for django.py
 
 def singleton(class_):
     instances = {}
+
     # д.б. статик метод
     #
     def getinstance(*args, **kwargs):
         if class_ not in instances:
             instances[class_] = class_(*args, **kwargs)
         return instances[class_]
+
     return getinstance
+
+
 @singleton
 class TuyaCloudClientNicerSingleton(tuyacloud.TuyaCloudClientNicer):
     pass
+
 
 def get_TuyaCloudClient(uid: int) -> object:
     if 1 != UserSettings.objects.filter(pk=uid).count():
@@ -219,8 +252,8 @@ def menu(request):
 
 def set_logger():
     logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    #logger_file_handler = logging.FileHandler(f'{__name__}.log')
-    logger_file_handler = logging.handlers.RotatingFileHandler(f'{__name__}.log',maxBytes=51200, backupCount=2)
+    # logger_file_handler = logging.FileHandler(f'{__name__}.log')
+    logger_file_handler = logging.handlers.RotatingFileHandler(f'{__name__}.log', maxBytes=51200, backupCount=2)
     # logger_file_handler.setLevel(logging.DEBUG)
     logger_file_handler.setFormatter(logger_formatter)
     logger1 = logging.getLogger(__name__)

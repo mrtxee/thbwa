@@ -33,6 +33,7 @@ class TuyaHomeRooms(models.Model):
 class TuyaDevices(models.Model):
     uuid = models.CharField(max_length=64, primary_key=True)
     room = models.ForeignKey(TuyaHomeRooms, on_delete=models.CASCADE, null=True, unique=False, default=None)
+    home = models.ForeignKey(TuyaHomes, on_delete=models.CASCADE, null=False, unique=False)
     owner_id = models.PositiveIntegerField(null=False)
     name = models.CharField(max_length=255, null=False)
     icon_url = models.CharField(max_length=255, null=True)
