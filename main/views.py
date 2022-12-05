@@ -9,7 +9,7 @@ from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, Tu
 
 # noinspection DuplicatedCode
 def api(request, ACTION=None, USER_ID=None):
-    result = {'success': True, 'data': {}, 'msgs': []}
+    result = {'success': True, 'msgs': [], 'data': {}}
     if not ACTION or not USER_ID:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -109,6 +109,7 @@ def api(request, ACTION=None, USER_ID=None):
             rooms = TuyaHomeRooms.objects.filter(
                 home_id__in=homes_ids
             ).values('home_id', 'room_id', 'name')
+
             devices = TuyaDevices.objects.filter(
                 owner_id__in=homes_ids
             ).values('name', 'icon_url','category','uuid', 'room_id', 'owner_id')
@@ -117,9 +118,12 @@ def api(request, ACTION=None, USER_ID=None):
                 'rooms': list(rooms),
                 'devices': list(devices)
             }
+            result['msgs'].append(f"homes available {homes.count()}")
+            result['msgs'].append(f"rooms available {rooms.count()}")
+            result['msgs'].append(f"devices available {devices.count()}")
         case _:
             result['success'] = False
-            result['msgs'].append(f"unknown action: {ACTION} for {USER_ID}")
+            result['msgs'].append(f"unknown action: {ACTION} on {USER_ID}")
     return JsonResponse(result)
 
 
