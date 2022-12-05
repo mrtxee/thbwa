@@ -20,8 +20,9 @@ def api(request, ACTION=None, USER_ID=None):
     match ACTION:
         case "del_homes":
             TuyaHomes.objects.filter(user=USER_ID).delete()
-            #v = TuyaHomes.objects.filter(user=USER_ID).values()
-            #result['msgs'].append(list(v))
+            result['msgs'].append('homes truncated')
+            # v = TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+            # result['msgs'].append(list(v))
 
         case "load_homes":
             try:
@@ -120,15 +121,24 @@ def api(request, ACTION=None, USER_ID=None):
         case "get_devices":
             homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id', 'name', 'geo_name')
             for home in homes:
-                rooms = TuyaHomeRooms.objects.filter(home_id=home['home_id']).values('home_id', 'room_id', 'name')
-                # home['rooms'] = [rooms[k] for k in range(rooms.count())]
+                rooms = list(TuyaHomeRooms.objects.filter(home_id=home['home_id']).values('home_id', 'room_id', 'name'))
+                rooms.append({
+                    'room_id': None,
+                    'home_id': home['home_id'],
+                    'name': 'default'
+                })
+
                 home['rooms'] = []
                 for room in rooms:
                     room['devices'] = list(TuyaDevices.objects.filter(
-                        room_id=room['room_id']
+                        room_id=room['room_id'], home_id=room['home_id']
                     ).values('name', 'icon_url', 'category', 'uuid'))
 
-                    home['rooms'].append(room)
+                    if 0 < len(room['devices']):
+                        if not room['room_id']:
+                            room['room_id'] = 10 * room['home_id']
+                        home['rooms'].append(room)
+
                 result['data'].append(home)
                 result['msgs'].append(home['home_id'])
         case "get_devices_line":
