@@ -3,6 +3,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from django.http import JsonResponse
 from django.shortcuts import render
+import inspect
 import tuyacloud
 from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices
 
@@ -165,6 +166,24 @@ def api(request, ACTION=None, USER_ID=None):
             result['msgs'].append(f"unknown action: {ACTION} on {USER_ID}")
     return JsonResponse(result)
 
+def api_load_device_status(request, USER_ID=None, DEVICE_UUID=None):
+    #http://localhost:8000/api/v1.0/load_device_state/2/08003658d8bfc0522706
+    result = {'success': True, 'msgs': [], 'data': []}
+    if not DEVICE_UUID or not USER_ID:
+        result['success'] = False
+        result['msgs'].append("bad query")
+        return JsonResponse(result)
+    else:
+        result['msgs'].append(f"do {inspect.stack()[0][3]} for {USER_ID}.{DEVICE_UUID}")
+    try:
+        tcc = get_TuyaCloudClient(USER_ID)
+    except (KeyError, TypeError) as e:
+        result['success'] = False
+        result['msgs'].append(f"Exception: {str(e)}")
+        return JsonResponse(result)
+    result['data'] = tcc.get_device_details(DEVICE_UUID)['status']
+
+    return JsonResponse(result)
 
 # todo: see object_factory for django.py
 

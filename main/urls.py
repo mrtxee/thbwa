@@ -3,7 +3,7 @@ from django.urls import path, re_path
 from . import views
 
 """
-    -/api/v1.0/truncate_devices/<UID>
+    -/api/v1.0/truncate_devices/<UID:localDB userID>
     -/api/v1.0/reload_devices/<UID>
     /api/v1.0/load_homes/<UID>
     /api/v1.0/load_rooms/<UID>
@@ -11,6 +11,7 @@ from . import views
     /api/v1.0/set_device_rooms/<UID>
     другие методы рест-апи
     /api/v1.0/get_devices/<UID>
+    /api/v1.0/load_device_status/<UID>/<UUID:device Tuya UUID>
     
     ДИСПАТЧЕР_СЕРВЕЛЕТ
     URL-ДИСПЕТЧЕР
@@ -18,6 +19,7 @@ from . import views
 
 urlpatterns = [
     path('v1.0/<str:ACTION>/<str:USER_ID>', views.api, name='api'),
+    path('v1.0/load_device_status/<str:USER_ID>/<str:DEVICE_UUID>', views.api_load_device_status, name='api'),
     #path('v1.0/load_homes/<str:USER_ID>', views.api, name='api_load_homes'),
     #path('v1.0/load_rooms/<str:USER_ID>', views.api, name='api_load_rooms'),
     #path('v1.0/get_devices/<str:USER_ID>', controller.devices(), name='api_load_rooms'),
