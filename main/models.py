@@ -35,6 +35,7 @@ class TuyaDevices(models.Model):
     room = models.ForeignKey(TuyaHomeRooms, on_delete=models.CASCADE, null=True, unique=False, default=None)
     home = models.ForeignKey(TuyaHomes, on_delete=models.CASCADE, null=False, unique=False)
     owner_id = models.PositiveIntegerField(null=False)
+    device_id = models.CharField(max_length=64, default=None, null=False)
     name = models.CharField(max_length=255, null=False)
     icon_url = models.CharField(max_length=255, null=True)
     category = models.CharField(max_length=255)

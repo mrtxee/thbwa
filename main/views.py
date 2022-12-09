@@ -93,6 +93,7 @@ def api(request, ACTION=None, USER_ID=None):
                 row['icon_url'] = 'https://' + tcc.ENDPOINT_URL.replace('openapi', 'images') + '/' + device['icon']
                 row['payload'] = device
                 row['home_id'] = device['owner_id']
+                row['device_id'] = device['id']
                 obj, is_obj_created = TuyaDevices.objects.update_or_create(
                     pk=device['uuid'], defaults=row
                 )
@@ -133,7 +134,7 @@ def api(request, ACTION=None, USER_ID=None):
                 for room in rooms:
                     room['devices'] = list(TuyaDevices.objects.filter(
                         room_id=room['room_id'], home_id=room['home_id']
-                    ).values('name', 'icon_url', 'category', 'uuid'))
+                    ).values('name', 'icon_url', 'category', 'device_id'))
 
                     if 0 < len(room['devices']):
                         if not room['room_id']:
@@ -166,8 +167,9 @@ def api(request, ACTION=None, USER_ID=None):
             result['msgs'].append(f"unknown action: {ACTION} on {USER_ID}")
     return JsonResponse(result)
 
-def api_load_device_status(request, USER_ID=None, DEVICE_UUID=None):
-    #http://localhost:8000/api/v1.0/load_device_state/2/08003658d8bfc0522706
+
+def api_get_device_functions(request, USER_ID=None, DEVICE_UUID=None):
+    #http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
     result = {'success': True, 'msgs': [], 'data': []}
     if not DEVICE_UUID or not USER_ID:
         result['success'] = False
@@ -181,7 +183,73 @@ def api_load_device_status(request, USER_ID=None, DEVICE_UUID=None):
         result['success'] = False
         result['msgs'].append(f"Exception: {str(e)}")
         return JsonResponse(result)
-    result['data'] = tcc.get_device_details(DEVICE_UUID)['status']
+    result['data'] = tcc.get_device_functions(DEVICE_UUID)
+
+    return JsonResponse(result)
+
+def api_get_device_status(request, USER_ID=None, DEVICE_UUID=None):
+    #http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
+    result = {'success': True, 'msgs': [], 'data': []}
+    if not DEVICE_UUID or not USER_ID:
+        result['success'] = False
+        result['msgs'].append("bad query")
+        return JsonResponse(result)
+    else:
+        result['msgs'].append(f"do {inspect.stack()[0][3]} for {USER_ID}.{DEVICE_UUID}")
+    try:
+        tcc = get_TuyaCloudClient(USER_ID)
+    except (KeyError, TypeError) as e:
+        result['success'] = False
+        result['msgs'].append(f"Exception: {str(e)}")
+        return JsonResponse(result)
+    resp_raw = tcc.get_device_status(DEVICE_UUID)
+
+    result['data'] = {}
+    for k in range(len(resp_raw)):
+        result['data'][resp_raw[k]['code']]=resp_raw[k]['value']
+
+    return JsonResponse(result)
+
+def api_set_device_status(request, USER_ID=None, DEVICE_UUID=None):
+    #http://localhost:8000/api/v1.0/set_device_status/2/08003658d8bfc0522706
+    result = {'success': True, 'msgs': [], 'data': []}
+    if not DEVICE_UUID or not USER_ID:
+        result['success'] = False
+        result['msgs'].append("bad query")
+        return JsonResponse(result)
+    else:
+        result['msgs'].append(f"do {inspect.stack()[0][3]} for {USER_ID}.{DEVICE_UUID}")
+
+    exec0 = {
+            "commands": [
+                {
+                    "code": "switch_led",
+                    "value": True
+                },
+                {
+                    "code": "bright_value",
+                    "value": 30
+                }
+            ]
+        }
+    commands = []
+    for key in list(request.POST.keys()):
+        commands.append({
+            "code": key,
+            "value": request.POST[key]
+        })
+    exec = { "commands": commands }
+    result['msgs'].append(exec)
+    result['msgs'].append(exec0)
+
+
+    try:
+        tcc = get_TuyaCloudClient(USER_ID)
+    except (KeyError, TypeError) as e:
+        result['success'] = False
+        result['msgs'].append(f"Exception: {str(e)}")
+        return JsonResponse(result)
+    result['data'] = tcc.exec_device_command(DEVICE_UUID, exec)
 
     return JsonResponse(result)
 
