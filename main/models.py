@@ -30,6 +30,13 @@ class TuyaHomeRooms(models.Model):
     room_id FK, null=true
     uuid	"53436805c44f33b65703" PK
 '''
+class TuyaDeviceFunctions(models.Model):
+    product_id = models.CharField(max_length=255, primary_key=True)
+    category = models.CharField(max_length=255)
+    functions = models.JSONField(default=None, null=True)
+    status = models.JSONField(default=None, null=True)
+    payload = models.JSONField()
+
 class TuyaDevices(models.Model):
     uuid = models.CharField(max_length=64, primary_key=True)
     room = models.ForeignKey(TuyaHomeRooms, on_delete=models.CASCADE, null=True, unique=False, default=None)

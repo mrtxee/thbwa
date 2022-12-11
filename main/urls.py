@@ -8,10 +8,11 @@ from . import views
     /api/v1.0/load_homes/<UID>
     /api/v1.0/load_rooms/<UID>
     /api/v1.0/load_devices/<UID>
+    /api/v1.0/load_device_functions/<UID>
     /api/v1.0/set_device_rooms/<UID>
     другие методы рест-апи
     /api/v1.0/get_devices/<UID>
-    /api/v1.0/load_device_status/<UID>/<UUID:device Tuya UUID>
+
     
     ДИСПАТЧЕР_СЕРВЕЛЕТ
     URL-ДИСПЕТЧЕР

@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 import inspect
 import tuyacloud
-from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices
+from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
 
 
 # noinspection DuplicatedCode
@@ -143,6 +143,37 @@ def api(request, ACTION=None, USER_ID=None):
 
                 result['data'].append(home)
                 result['msgs'].append(home['home_id'])
+
+        case "load_device_functions":
+            try:
+                tcc = get_TuyaCloudClient(USER_ID)
+            except (KeyError, TypeError) as e:
+                result['success'] = False
+                result['msgs'].append(f"Exception: {str(e)}")
+                return JsonResponse(result)
+
+            devices = TuyaDevices.objects.filter(
+                home_id__in=TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+            ).values('device_id', 'product_id', 'payload')
+
+            while devices:
+                device = devices[0]
+                functions = tcc.get_device_functions(device['device_id'])
+                cols = [f.name for f in TuyaDeviceFunctions._meta.fields]
+                row = {k: functions[k] for k in cols if k in functions}
+                row['product_id'] = device['product_id']
+                row['status'] = device['payload']['status']
+                row['payload'] = functions
+                if not 'functions' in row:
+                    row['functions'] = row['status']
+
+                if not TuyaDeviceFunctions.objects.filter(product_id=device['product_id']).exists():
+                    obj = TuyaDeviceFunctions.objects.create(**row)
+                    result['msgs'].append(f'record {device["product_id"]} created')
+                else:
+                    result['msgs'].append(f'record {device["product_id"]} skipped')
+                devices = devices.exclude(product_id=device["product_id"])
+
         case "get_devices_line":
             homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id', 'name', 'geo_name')
             homes_ids = [homes[k]['home_id'] for k in range(homes.count())]
@@ -151,8 +182,8 @@ def api(request, ACTION=None, USER_ID=None):
             ).values('home_id', 'room_id', 'name')
 
             devices = TuyaDevices.objects.filter(
-                owner_id__in=homes_ids
-            ).values('name', 'icon_url', 'category', 'uuid', 'room_id', 'owner_id')
+                home_id__in=homes_ids
+            ).values('name', 'icon_url', 'category', 'device_id', 'room_id', 'home_id','product_id')
             result['data'] = {
                 'homes': list(homes),
                 'rooms': list(rooms),
@@ -220,28 +251,28 @@ def api_set_device_status(request, USER_ID=None, DEVICE_UUID=None):
     else:
         result['msgs'].append(f"do {inspect.stack()[0][3]} for {USER_ID}.{DEVICE_UUID}")
 
-    exec0 = {
-            "commands": [
-                {
-                    "code": "switch_led",
-                    "value": True
-                },
-                {
-                    "code": "bright_value",
-                    "value": 30
-                }
-            ]
-        }
+    # exec0 = {
+    #         "commands": [
+    #             {
+    #                 "code": "switch_led",
+    #                 "value": True
+    #             },
+    #             {
+    #                 "code": "bright_value",
+    #                 "value": 30
+    #             }
+    #         ]
+    #     }
+    req = json.loads(request.body.decode('utf-8'))
     commands = []
-    for key in list(request.POST.keys()):
+    for key in list(req.keys()):
         commands.append({
             "code": key,
-            "value": request.POST[key]
+            "value": req[key]
         })
-    exec = { "commands": commands }
-    result['msgs'].append(exec)
-    result['msgs'].append(exec0)
-
+    exec = {"commands": commands}
+    #result['exec']=commands
+    #result['msgs'].append(exec0)
 
     try:
         tcc = get_TuyaCloudClient(USER_ID)
