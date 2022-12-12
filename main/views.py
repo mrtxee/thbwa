@@ -145,6 +145,7 @@ def api(request, ACTION=None, USER_ID=None):
                         else:
                             devices[k]['functions'] = []
                             devices[k]['status'] = []
+
                     room['devices'] = devices
 
                     if 0 < len(room['devices']):
@@ -182,13 +183,33 @@ def api(request, ACTION=None, USER_ID=None):
                     for k in range(len(row['functions'])):
                         if row['functions'][k]['values']:
                             row['functions'][k]['values'] = json.loads(row['functions'][k]['values'])
+
                 if type(row['status']) == list:
                     for k in range( len(row['status']) ):
                         if row['status'][k]['value']:
                             try:
                                 row['status'][k]['value'] = json.loads(row['status'][k]['value'])
+                                #result['msgs'].append(f"{row['product_id']} json value status found")
                             except (TypeError, ValueError) :
                                 pass
+
+                function_codes = []
+                if 0<len(row['functions']):
+                    function_codes = [ row['functions'][j]['code'] for j in range( len(row['functions']) ) ]
+                if 0<len(row['status']):
+                    for st in row['status']:
+                        if st['code'] not in function_codes:
+                            row['functions'].append({
+                                'code' : st['code'],
+                                'desc' : st['code'],
+                                'name' : st['code'],
+                                'type' : "Readonly",
+                                'values' : {}
+                            })
+                # if len(status_codes) > len(function_codes):
+                #     result['msgs'].append(f"{row['product_id']} status-functions ISSUE")
+                #     result['msgs'].append(str(function_codes))
+                #     result['msgs'].append(str(status_codes))
 
                 if not TuyaDeviceFunctions.objects.filter(product_id=device['product_id']).exists():
                     obj = TuyaDeviceFunctions.objects.create(**row)
