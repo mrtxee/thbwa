@@ -3,6 +3,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.db.models import Subquery, OuterRef
 import inspect
 import tuyacloud
 from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
@@ -132,9 +133,19 @@ def api(request, ACTION=None, USER_ID=None):
 
                 home['rooms'] = []
                 for room in rooms:
-                    room['devices'] = list(TuyaDevices.objects.filter(
+                    devices = list(TuyaDevices.objects.filter(
                         room_id=room['room_id'], home_id=room['home_id']
-                    ).values('name', 'icon_url', 'category', 'device_id'))
+                    ).values('name', 'icon_url', 'category', 'device_id', 'product_id'))
+
+                    for k in range( len(devices) ):
+                        dfk = list( TuyaDeviceFunctions.objects.filter( product_id = devices[k]['product_id'] )
+                           .values('functions', 'status') )
+                        if dfk:
+                            devices[k] = devices[k] | dfk[0]
+                        else:
+                            devices[k]['functions'] = []
+                            devices[k]['status'] = []
+                    room['devices'] = devices
 
                     if 0 < len(room['devices']):
                         if not room['room_id']:
@@ -154,18 +165,30 @@ def api(request, ACTION=None, USER_ID=None):
 
             devices = TuyaDevices.objects.filter(
                 home_id__in=TuyaHomes.objects.filter(user=USER_ID).values('home_id')
-            ).values('device_id', 'product_id', 'payload')
+            ).values('device_id', 'product_id', 'payload', 'category')
 
             while devices:
                 device = devices[0]
-                functions = tcc.get_device_functions(device['device_id'])
+                resp = tcc.get_device_functions(device['device_id'])
                 cols = [f.name for f in TuyaDeviceFunctions._meta.fields]
-                row = {k: functions[k] for k in cols if k in functions}
+                row = {k: resp[k] for k in cols if k in resp}
                 row['product_id'] = device['product_id']
                 row['status'] = device['payload']['status']
-                row['payload'] = functions
+                row['category'] = device['category']
+                row['payload'] = resp
                 if not 'functions' in row:
-                    row['functions'] = row['status']
+                    row['functions'] = []
+                elif type(row['functions']) == list:
+                    for k in range(len(row['functions'])):
+                        if row['functions'][k]['values']:
+                            row['functions'][k]['values'] = json.loads(row['functions'][k]['values'])
+                if type(row['status']) == list:
+                    for k in range( len(row['status']) ):
+                        if row['status'][k]['value']:
+                            try:
+                                row['status'][k]['value'] = json.loads(row['status'][k]['value'])
+                            except (TypeError, ValueError) :
+                                pass
 
                 if not TuyaDeviceFunctions.objects.filter(product_id=device['product_id']).exists():
                     obj = TuyaDeviceFunctions.objects.create(**row)
@@ -173,26 +196,6 @@ def api(request, ACTION=None, USER_ID=None):
                 else:
                     result['msgs'].append(f'record {device["product_id"]} skipped')
                 devices = devices.exclude(product_id=device["product_id"])
-
-        case "get_devices_line":
-            homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id', 'name', 'geo_name')
-            homes_ids = [homes[k]['home_id'] for k in range(homes.count())]
-            rooms = TuyaHomeRooms.objects.filter(
-                home_id__in=homes_ids
-            ).values('home_id', 'room_id', 'name')
-
-            devices = TuyaDevices.objects.filter(
-                home_id__in=homes_ids
-            ).values('name', 'icon_url', 'category', 'device_id', 'room_id', 'home_id','product_id')
-            result['data'] = {
-                'homes': list(homes),
-                'rooms': list(rooms),
-                'devices': list(devices)
-            }
-
-            result['msgs'].append(f"homes available {homes.count()}")
-            result['msgs'].append(f"rooms available {rooms.count()}")
-            result['msgs'].append(f"devices available {devices.count()}")
         case _:
             result['success'] = False
             result['msgs'].append(f"unknown action: {ACTION} on {USER_ID}")
@@ -215,6 +218,12 @@ def api_get_device_functions(request, USER_ID=None, DEVICE_UUID=None):
         result['msgs'].append(f"Exception: {str(e)}")
         return JsonResponse(result)
     result['data'] = tcc.get_device_functions(DEVICE_UUID)
+
+    if type(result['data']['functions']) == list:
+        for k in range( len( result['data']['functions'] ) ):
+            if result['data']['functions'][k]['values'] :
+                result['data']['functions'][k]['values'] = json.loads(result['data']['functions'][k]['values'])
+        #result['data']['functions'] = json.loads(result['data']['functions'][1]['values'])
 
     return JsonResponse(result)
 
