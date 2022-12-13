@@ -266,8 +266,9 @@ def api_get_device_status(request, USER_ID=None, DEVICE_UUID=None):
     resp_raw = tcc.get_device_status(DEVICE_UUID)
 
     result['data'] = {}
-    for k in range(len(resp_raw)):
-        result['data'][resp_raw[k]['code']]=resp_raw[k]['value']
+    if list == type(resp_raw):
+        for k in range(len(resp_raw)):
+            result['data'][resp_raw[k]['code']]=resp_raw[k]['value']
 
     return JsonResponse(result)
 
