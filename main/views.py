@@ -145,8 +145,10 @@ def api(request, ACTION=None, USER_ID=None):
                         else:
                             devices[k]['functions'] = []
                             devices[k]['status'] = []
+                        # if devices[k]['functions'] == [] and devices[k]['status'] == []:
+                        #     result['msgs'].append(f"skip passive device {devices[k]['device_id']}")
 
-                    room['devices'] = devices
+                    room['devices'] = [d for d in devices if not d['functions'] == [] and not d['status'] == []]
 
                     if 0 < len(room['devices']):
                         if not room['room_id']:
@@ -312,6 +314,7 @@ def api_set_device_status(request, USER_ID=None, DEVICE_UUID=None):
         result['msgs'].append(f"Exception: {str(e)}")
         return JsonResponse(result)
     result['data'] = tcc.exec_device_command(DEVICE_UUID, exec)
+    result['data0'] = exec
 
     return JsonResponse(result)
 
