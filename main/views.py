@@ -148,7 +148,7 @@ def api(request, ACTION=None, USER_ID=None):
                         # if devices[k]['functions'] == [] and devices[k]['status'] == []:
                         #     result['msgs'].append(f"skip passive device {devices[k]['device_id']}")
 
-                    room['devices'] = [d for d in devices if not d['functions'] == [] and not d['status'] == []]
+                    room['devices'] = [d for d in devices if d['functions'] and d['status'] ]
 
                     if 0 < len(room['devices']):
                         if not room['room_id']:
