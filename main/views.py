@@ -7,7 +7,7 @@ from django.db.models import Subquery, OuterRef
 import inspect
 import tuyacloud
 from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
-
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 # noinspection DuplicatedCode
 def api(request, ACTION=None, USER_ID=None):
