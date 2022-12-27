@@ -8,6 +8,5 @@ db.sqlite3
 **/.git
 **/__pycache__
 node_modules
-tuyacloud/
 **/*.log
 **/*.log.*

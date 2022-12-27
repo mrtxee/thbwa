@@ -8,6 +8,7 @@ import inspect
 import tuyacloud
 from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from html import unescape
 
 # noinspection DuplicatedCode
 def api(request, ACTION=None, USER_ID=None):
@@ -224,7 +225,6 @@ def api(request, ACTION=None, USER_ID=None):
             result['msgs'].append(f"unknown action: {ACTION} on {USER_ID}")
     return JsonResponse(result)
 
-
 def api_get_device_functions(request, USER_ID=None, DEVICE_UUID=None):
     #http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
     result = {'success': True, 'msgs': [], 'data': []}
@@ -401,7 +401,11 @@ def user_playground(request):
 
 
 def devices(request):
-    return render(request, "devices.html")
+    context = {
+        'head_includes' : unescape('''<script defer="defer" src="/static/js/main.652b91da.js"></script><link href="/static/css/main.b3eeeea7.css" rel="stylesheet">''')
+        # "user" : request.user
+    }
+    return render(request, "devices.html", context=context)
 
 
 def menu(request):
