@@ -1,14 +1,17 @@
 import json
 import logging
 from logging.handlers import RotatingFileHandler
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
-from django.db.models import Subquery, OuterRef
+from django.conf import settings
 import inspect
 import tuyacloud
 from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from html import unescape
+import os
+from dotenv import load_dotenv
+dotenv_path = os.path.join(settings.BASE_DIR, '.env')
+load_dotenv(dotenv_path)
+
 
 # noinspection DuplicatedCode
 def api(request, ACTION=None, USER_ID=None):
@@ -401,11 +404,17 @@ def user_playground(request):
 
 
 def devices(request):
-    context = {
-        'head_includes' : unescape('''<script defer="defer" src="/static/js/main.652b91da.js"></script><link href="/static/css/main.b3eeeea7.css" rel="stylesheet">''')
-        # "user" : request.user
-    }
-    return render(request, "devices.html", context=context)
+    if request.user.is_authenticated:
+        head_includes = '<script defer="defer" src="/static/js/main.%s.js" bbu="%s" ui="%s"></script>' % (
+        'd1605714', os.environ.get("BACKEND_BASE_URL"), request.user.id)
+        head_includes += '<link href="/static/css/main.b3eeeea7.css" rel="stylesheet">'
+        context = {
+            'head_includes': head_includes
+        }
+        return render(request, "devices.html", context=context)
+    else:
+        return HttpResponse("<h1>login please</h1>")
+
 
 
 def menu(request):
