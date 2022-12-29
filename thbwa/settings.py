@@ -30,8 +30,11 @@ CORS_ORIGIN_ALLOW_ALL = DEBUG
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000', 'http://localhost:3000', 'http://127.0.0.1:3001', 'http://localhost:3001',
     'http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:8001', 'http://localhost:8001',
-    'mrtxee.pythonanywhere.com'
+    'http://mrtxee.pythonanywhere.com', 'https://mrtxee.pythonanywhere.com'
 ]
+ALLOWED_HOSTS = ['*']
+
+
 
 #CSRF_COOKIE_NAME = "XSRF-TOKEN"
 #CSRF_COOKIE_NAME = "csrftoken"
@@ -131,17 +134,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
