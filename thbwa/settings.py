@@ -27,11 +27,13 @@ CORS_ORIGIN_ALLOW_ALL = DEBUG
 
 # CSRF protection policy
 # CORS_ORIGIN_ALLOW_ALL = False
-CORS_ALLOWED_ORIGINS = [
-    'http://127.0.0.1:3000', 'http://localhost:3000', 'http://127.0.0.1:3001', 'http://localhost:3001',
-    'http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:8001', 'http://localhost:8001',
-    'http://mrtxee.pythonanywhere.com', 'https://mrtxee.pythonanywhere.com'
-]
+# CORS_ALLOWED_ORIGINS = [
+#     'http://127.0.0.1:3000', 'http://localhost:3000', 'http://127.0.0.1:3001', 'http://localhost:3001',
+#     'http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:8001', 'http://localhost:8001',
+#     'http://mrtxee.pythonanywhere.com', 'https://mrtxee.pythonanywhere.com',
+#     'http://77.222.54.140', 'https://77.222.54.140',
+#
+# ]
 ALLOWED_HOSTS = ['*']
 
 

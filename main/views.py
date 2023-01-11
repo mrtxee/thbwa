@@ -165,10 +165,10 @@ def api(request, ACTION=None, USER_ID=None):
         case "load_device_functions":
             try:
                 tcc = get_TuyaCloudClient(USER_ID)
-            except (KeyError, TypeError) as e:
+            except (KesyError, TypeError) as e:
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
-                return JsonResponse(result)
+                return JsonResponse(reult)
 
             devices = TuyaDevices.objects.filter(
                 home_id__in=TuyaHomes.objects.filter(user=USER_ID).values('home_id')
@@ -424,7 +424,6 @@ def menu(request):
     }
     return render(request, "index.html", context=context)
 
-
 def set_logger():
     logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # logger_file_handler = logging.FileHandler(f'{__name__}.log')
@@ -440,6 +439,5 @@ def set_logger():
     logger_tuya_cloud_client.addHandler(logger_file_handler)
     logger1.info(f"F_HANDLERS: {str(logging.handlers)}")
     return logger1
-
 
 logger = set_logger()
