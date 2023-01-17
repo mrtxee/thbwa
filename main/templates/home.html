@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block text %}
+
+		<div class="row mt-5">
+			<div class="col-12">
+				<h3>О проекте</h3>
+				<p class="lead">Tuya Home Online - это универсальный веб-клиент платформы Интернета вещей Tuya Smart. Веб-клиент позволит управлять вашим умным домом с любого пользовательского устройства, вне зависимости от провайдера мобильного приложения.</p>
+                <p class="lead">Главные преимущества веб-приложения Tuya Home Online
+                    <ul>
+                        <li>
+                            возможность управлять умным домом с ПК, с любого клиентского устройства помимо смартфона
+                        </li>
+                        <li>
+                            унифицированный интерфейс для всех устройств
+                        </li>
+                        <li>
+                            поддержка всех мобильных прижений платформы (Tuya Smart, Smart Life, DIGMA smart life, BlitzWolf, Я Смарт, HIPER IOT, ELARI SmartHome, HomeAlone, EKF Connect, SLS, DENVER SMART HOME, ЭРА Smart, KOJIMA HOME, GEOZON HOME, IRBIS Home, Perenio Lite, Minimir Home, Gosund, iFEEL Safe+Smart, Sibling, STARWIND SmartLife, Navigator SmartHome, Securic Smart Life, Brilliant Smart, ... )
+                        </li>
+                        <li>
+                            возможность взаимодействия с разработчиком, для развития проекта под потребности пользвоателей
+                        </li>
+                    </ul>
+                </p>
+				<h3>Как работает?</h3>
+                <p>
+                    Пользователь получает токен доступа к мобильному приложению на iot.tuya.com -> Пользователь авторизуется на Tuya Home Online с указанным токеном ->
+                </p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<code>
+					{{ terminal }}
+				</code>
+			</div>
+		</div>
+{% endblock %}

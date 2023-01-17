@@ -422,7 +422,7 @@ def menu(request):
         "terminal": str(request.user),
         # "user" : request.user
     }
-    return render(request, "index.html", context=context)
+    return render(request, "home.html", context=context)
 
 def set_logger():
     logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
