@@ -1,37 +1,68 @@
 {% extends 'base.html' %}
 {% block text %}
+		<div class="row">
+			<div class="col text-end">
+                <img src="/static/img/app01.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app03.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app04.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app05.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app06.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app07.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app08.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app09.png" width="32" class="rounded" alt="...">
+                <img src="/static/img/app10.png" width="32" class="rounded" alt="...">
+			</div>
+		</div>
 
-		<div class="row mt-5">
+		<div class="row">
 			<div class="col-12">
-				<h3>О проекте</h3>
-				<p class="lead">Tuya Home Online - это универсальный веб-клиент платформы Интернета вещей Tuya Smart. Веб-клиент позволит управлять вашим умным домом с любого пользовательского устройства, вне зависимости от провайдера мобильного приложения.</p>
-                <p class="lead">Главные преимущества веб-приложения Tuya Home Online
-                    <ul>
-                        <li>
-                            возможность управлять умным домом с ПК, с любого клиентского устройства помимо смартфона
-                        </li>
-                        <li>
-                            унифицированный интерфейс для всех устройств
-                        </li>
-                        <li>
-                            поддержка всех мобильных прижений платформы (Tuya Smart, Smart Life, DIGMA smart life, BlitzWolf, Я Смарт, HIPER IOT, ELARI SmartHome, HomeAlone, EKF Connect, SLS, DENVER SMART HOME, ЭРА Smart, KOJIMA HOME, GEOZON HOME, IRBIS Home, Perenio Lite, Minimir Home, Gosund, iFEEL Safe+Smart, Sibling, STARWIND SmartLife, Navigator SmartHome, Securic Smart Life, Brilliant Smart, ... )
-                        </li>
-                        <li>
-                            возможность взаимодействия с разработчиком, для развития проекта под потребности пользвоателей
-                        </li>
-                    </ul>
+				<p class="lead fw-s1emibold">
+                    Tuya Home Online - это универсальный веб-клиент платформы Интернета вещей Tuya Smart. Веб-клиент позволит управлять вашим умным домом с любого пользовательского устройства, вне зависимости от провайдера мобильного приложения. Главные преимущества веб-приложения:
                 </p>
+			</div>
+		</div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 mt-1">
+              <div class="col p-4">
+                  <p class="text-center">
+                      <img src="/static/img/1055687-crosspl.png" width="140" height="140" class="rounded" alt="...">
+                      <h4 class="text-center text-break">Кроссплатформенность</h4>
+                  </p>
+                  <p>Возможность управлять умным домом с ПК, с любого клиентского устройства помимо смартфона static/img/1055687-crosspl.png</p>
+              </div>
+              <div class="col p-4">
+                  <p class="text-center">
+                      <img src="/static/img/1055661-interf.png" width="140" height="140" class="rounded" alt="...">
+                      <h4 class="text-center text-break">Унификацированный интерфейс</h4>
+                  </p>
+                  <p>Унифицированный интерфейс для всех устройств умного дома. Отсутсвуе визуальный шума, в сравнении с мобильным приложением</p>
+              </div>
+              <div class="col p-4">
+                  <p class="text-center">
+                      <img src="/static/img/1055652-sourc.png" width="140" height="140" class="rounded" alt="...">
+                      <h4 class="text-center text-break">Любой источник данных</h4>
+                  </p>
+                  <p>Поддержка всех мобильных прижений платформы.
+                      <small class="text-muted">Tuya Smart, SmartLiving, DIGMA, BlitzWolf, EKF Connect, ЭРА Smart, iFEEL, IRBIS, STARWIND, Navigator, HIPER, ELARI, HomeAlone, SLS, DENVER, KOJIMA, GEOZON, ЯСмарт, Perenio, Minimir, Gosund, Sibling, Securic, Brilliant...</small>
+                  </p>
+              </div>
+              <div class="col p-4">
+                  <p class="text-center">
+                      <img src="/static/img/1055675-support.png" width="140" height="140" class="rounded" alt="...">
+                      <h4 class="text-center text-break">Поддержка</h4>
+                  </p>
+                  <p>открытая <a class="text-decoration-none" href="tg:mrtxee"><i class="bi bi-telegram"></i> поддержка</a> пользователей для совместного развития проекта улучшения пользовательского опыта </p>
+              </div>
+            </div>
+		<div class="row mt-2">
+			<div class="col">
 				<h3>Как работает?</h3>
                 <p>
                     Пользователь получает токен доступа к мобильному приложению на iot.tuya.com -> Пользователь авторизуется на Tuya Home Online с указанным токеном ->
                 </p>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-12">
-				<code>
+                <code>
 					{{ terminal }}
 				</code>
 			</div>
 		</div>
+
 {% endblock %}
