@@ -20,9 +20,14 @@ from main import views
 
 
 urlpatterns = [
-    path('', views.menu, name='google_auth_menu'),
+    path('', views.home),
+    path('user/profile/',           views.user_profile, name='user_profile'),
+    path('user/signin/',            views.user_signin, name='user_profile'),
+    path('user/signup/',            views.user_signup, name='user_profile'),
+    path('user/restore_password/',  views.user_restore_password, name='user_profile'),
+
+
     path('devices/', views.devices, name='devices'),
-    path('accounts/profile/', views.user_profile, name='user_profile'),
     path('user/pg/', views.user_playground, name='user_profile'),
     path('api/', include('main.urls')),
     # path('accounts/profile/', TemplateView.as_view(template_name="accounts_profile.html")),

@@ -357,28 +357,6 @@ def get_TuyaCloudClient(uid: int) -> object:
         raise KeyError("bad tuya settings provided")
     return tcc
 
-
-def user_profile(request):
-    context = {'form': UserSettingsForm(request.POST or None)}
-
-    if request.method == 'POST':
-        # add or update record
-        if context['form'].is_valid():
-            cols = [f.name for f in UserSettings._meta.fields]
-            row = {k: request.POST[k] for k in cols if k in request.POST}
-            obj, is_obj_created = UserSettings.objects.update_or_create(
-                user_id=request.user.id, defaults=row
-            )
-            logger.debug(f'is_obj_created {is_obj_created}; obj {obj}')
-            context['success_updated_alert'] = True
-        else:
-            context['fill_form_alert'] = True
-    else:
-        if UserSettings.objects.filter(pk=request.user.id).exists():
-            context['form'] = UserSettingsForm(instance=UserSettings.objects.get(pk=request.user.id))
-    return render(request, "user_profile.html", context)
-
-
 def user_playground(request):
     context = {
         'settings': 'settings',
@@ -415,14 +393,56 @@ def devices(request):
     else:
         return HttpResponse("<h1>login please</h1>")
 
-
-
-def menu(request):
+def home(request):
     context = {
         "terminal": str(request.user),
         # "user" : request.user
     }
     return render(request, "home.html", context=context)
+
+def user_profile(request):
+    context = {'form': UserSettingsForm(request.POST or None)}
+
+    if request.method == 'POST':
+        # add or update record
+        if context['form'].is_valid():
+            cols = [f.name for f in UserSettings._meta.fields]
+            row = {k: request.POST[k] for k in cols if k in request.POST}
+            obj, is_obj_created = UserSettings.objects.update_or_create(
+                user_id=request.user.id, defaults=row
+            )
+            logger.debug(f'is_obj_created {is_obj_created}; obj {obj}')
+            context['success_updated_alert'] = True
+        else:
+            context['fill_form_alert'] = True
+    else:
+        if UserSettings.objects.filter(pk=request.user.id).exists():
+            context['form'] = UserSettingsForm(instance=UserSettings.objects.get(pk=request.user.id))
+    return render(request, "user/profile.html", context)
+
+
+def user_signin(request):
+    context = {
+        "terminal": "terminal",
+        # "user" : request.user
+    }
+    return render(request, "user/signin.html", context=context)
+
+def user_signup(request):
+    context = {
+        "terminal": "terminal",
+        # "user" : request.user
+    }
+    return render(request, "user/signup.html", context=context)
+
+def user_restore_password(request):
+    context = {
+        "terminal": "terminal",
+        # "user" : request.user
+    }
+    return render(request, "user/restore_password.html", context=context)
+
+
 
 def set_logger():
     logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
