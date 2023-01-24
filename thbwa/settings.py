@@ -80,7 +80,7 @@ ROOT_URLCONF = 'thbwa.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -153,11 +153,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # django-allauth config in here
 
 SITE_ID = 1
-#LOGIN_REDIRECT_URL = '/devices/'
-#ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-#ACCOUNT_SIGNUP_REDIRECT_URL = '/accounts/profile/'
+LOGIN_REDIRECT_URL = '/devices/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/#HP'
+ACCOUNT_SIGNUP_REDIRECT_URL = '/devices/'
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_EMAIL_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {

@@ -9,133 +9,87 @@
 
 		<div class="row d-flex justify-content-center align-items-center h-100">
 			<div class="col-12 col-md-8 col-lg-6 col-xl-5">
-				<div class="card shadow-2-strong" style="border-radius: 1rem;">
+                <div class="card collapse mb-4" id="collapseForgetSignupDiv">
+                    <div class="card-body p-5 text-center">
+                        <h4 class="mb-3">signuup form</h4>
+                        Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+                        <small>/accounts/signup/</small>
+
+                        <form method="POST" action="/accounts/signup/">
+                            {% csrf_token %}
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="id_login" placeholder="Username" name="username" autocomplete="username" maxlength="150" minlength="1" required>
+                                <label for="id_login">Username</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="id_email" placeholder="E-mail address" name="email" required>
+                                <label for="id_email">E-mail</label>
+                            </div>
+
+                            <div class="form-floating">
+                                <input type="password" class="form-control" id="id_password1" placeholder="Password" name="password1" autocomplete="new-password" required>
+                                <label for="id_password1">Password</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="password" class="form-control" id="id_password2" placeholder="Password" name="password2" autocomplete="new-password" required>
+                                <label for="id_password2">Password (repaet)</label>
+                            </div>
+
+                            <button class="w-100 btn btn-lg btn-primary" type="submit">Sign up »</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card collapse mb-4" id="collapseForgetPasswordDiv">
+                    <div class="card-body p-5 text-center">
+                        <h4 class="mb-3">forget password form</h4>
+                        Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+                        <small>/accounts/password/reset/</small>
+                    </div>
+                </div>
+
+				<div class="card">
 					<div class="card-body p-5 text-center">
-                        <button class="w-100 btn btn-lg btn-primary mb-4" style="background-color: #dd4b39;" type="submit">
+                        <a class="w-100 btn btn-lg btn-primary mb-4" href="/accounts/google/login/?process=login" style="background-color: #dd4b39;" role="button">
                             <i class="bi bi-google me-2"></i>
-                            Sign in with google
-                        </button>
-
-                        <div class="divider d-flex align-items-center my-4">
-                            <p class="text-center fw-bold mx-3 mb-0 text-muted">OR</p>
-                        </div>
-
-                        <div class="text-success">
-                            <p class="text-center fw-bold mx-3 mb-0 text-muted">OR</p>
-                        </div>
+                            Sign in with Google
+                        </a>
 
 
-                        <form>
-                            <h1 class="h3 mb-3 fw-normal hr">or sign in with e-mail</h1>
+                        <h4 class="mb-3">or sign in with username</h4>
 
+                        <form class="login" method="POST" action="/accounts/login/">
+                            {% csrf_token %}
                             <div class="form-floating">
-                                <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                                <label for="floatingInput">Email address</label>
+                                <input type="text" class="form-control" id="id_login" placeholder="Username" name="login" autocomplete="username" minlength="1" maxlength="150" required>
+                                <label for="id_login">Username</label>
                             </div>
                             <div class="form-floating">
-                                <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
-                                <label for="floatingPassword">Password</label>
+                                <input type="password" class="form-control" id="id_password" placeholder="Password" name="password" placeholder="Password" autocomplete="current-password" required>
+                                <label for="id_password">Password</label>
                             </div>
 
-                            <div class="checkbox mb-3">
-                                <label>
-                                    <input type="checkbox" value="remember-me"> Remember me
-                                </label>
-                            </div>
-
-                            <div class="d-flex justify-content-around align-items-center mb-4">
+                            <div class="d-flex justify-content-around align-items-center mb-4 mt-1">
                                 <!-- Checkbox -->
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="" id="form1Example3" checked />
-                                    <label class="form-check-label" for="form1Example3"> Remember me </label>
+                                    <input class="form-check-input" type="checkbox" value="" id="id_remember"  name="remember" checked />
+                                    <label class="form-check-label" for="id_remember"> Remember me </label>
                                 </div>
-                                <a href="#!">Forgot password?</a>
+                                <a data-bs-toggle="collapse" href="#collapseForgetPasswordDiv" role="button" aria-expanded="false" aria-controls="collapseForgetPasswordDiv">
+                                    Forgot password?
+                                </a>
                             </div>
 
                             <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
-                            <p class="mt-5 mb-3 text-muted">&copy; 2017–2022</p>
                         </form>
-
-
-
-
+                        <div class="mt-1">
+                            Don't have account yet?
+                            <a data-bs-toggle="collapse" href="#collapseForgetSignupDiv" role="button" aria-expanded="false" aria-controls="collapseForgetPasswordDiv">
+                                Sign up
+                            </a>
+                        </div>
 					</div>
-				</div>
+                </div>
 			</div>
 		</div>
-
-
-		<div class="row">
-			<div class="col mt-0">
-                <h3>Sign In</h3>
-
-                <p>
-                    Ds<a href="/user/signup/">sign up</a>
-                </p>
-
-
-                <p>
-                    <a href="/user/signup/">sign up</a>
-                </p>
-                <code>
-					{{ terminal }}
-				</code>
-
-                <div>
-                    <strong>Menu:</strong>
-                    <ul>
-                        <li><a href="/accounts/login/">Sign In</a></li>
-                        <li><a href="/accounts/signup/">Sign Up</a></li>
-                    </ul>
-                </div>
-
-
-                <h3>Sign In</h3>
-                <p>
-                    Please sign in with one of your existing third party accounts. Or, <a href="/user/signup/">sign up</a> for a 127.0.0.1:8001 account and sign in below:
-                </p>
-
-                <div class="socialaccount_ballot">
-                    <ul class="socialaccount_providers">
-                        <li>
-                            <a title="Google" class="socialaccount_provider google"
-                             href="/accounts/google/login/?process=login">Google</a>
-                        </li>
-                    </ul>
-                    <div class="login-or">or</div>
-                </div>
-                <form class="login" method="POST" action="/accounts/login/">
-                    <input type="hidden" name="csrfmiddlewaretoken" value="meyuLCGXGYXtlFadVcGRog8mAkA76GLB0YPAb0a7n8rDKPOtIxWTsi6qi9HnmOQq">
-                    <p>
-                        <label for="id_login">Username:</label>
-                        <input type="text" name="login" placeholder="Username" autocomplete="username" maxlength="150" required id="id_login">
-
-
-                    </p>
-
-
-                    <p>
-                        <label for="id_password">Password:</label>
-                        <input type="password" name="password" placeholder="Password" autocomplete="current-password" required id="id_password">
-
-
-                    </p>
-
-
-                    <p>
-                        <label for="id_remember">Remember Me:</label>
-                        <input type="checkbox" name="remember" id="id_remember">
-
-
-
-
-                    </p>
-
-                    <a class="button secondaryAction" href="/accounts/password/reset/">Forgot Password?</a>
-                    <button class="primaryAction" type="submit">Sign In</button>
-                </form>
-			</div>
-		</div>
-
 
 {% endblock %}

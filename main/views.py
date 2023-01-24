@@ -395,7 +395,8 @@ def devices(request):
 
 def home(request):
     context = {
-        "terminal": str(request.user),
+        "terminal": "",
+        #"terminal": str(request.user),
         # "user" : request.user
     }
     return render(request, "home.html", context=context)
@@ -419,29 +420,6 @@ def user_profile(request):
         if UserSettings.objects.filter(pk=request.user.id).exists():
             context['form'] = UserSettingsForm(instance=UserSettings.objects.get(pk=request.user.id))
     return render(request, "user/profile.html", context)
-
-
-def user_signin(request):
-    context = {
-        "terminal": "terminal",
-        # "user" : request.user
-    }
-    return render(request, "user/signin.html", context=context)
-
-def user_signup(request):
-    context = {
-        "terminal": "terminal",
-        # "user" : request.user
-    }
-    return render(request, "user/signup.html", context=context)
-
-def user_restore_password(request):
-    context = {
-        "terminal": "terminal",
-        # "user" : request.user
-    }
-    return render(request, "user/restore_password.html", context=context)
-
 
 
 def set_logger():

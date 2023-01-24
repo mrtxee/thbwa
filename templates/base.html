@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Tuya Home Online</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
 
     {% autoescape off %}
@@ -23,17 +23,23 @@
 				<li><a href="/" class="nav-link px-2 link-secondary">О проекте</a></li>
 				<li><a href="/devices/" class="nav-link px-2 link-dark">Мой дом</a></li>
 				<li><a href="#" class="nav-link px-2 link-dark">FAQ</a></li>
+                <li><a href="/accounts/login/" class="nav-link px-2 link-dark">signin</a></li>
+
 			</ul>
 			
-			{% if user.socialaccount_set.all.0 and user.is_authenticated %}
+			{% if user.is_authenticated %}
 			<div class="col-md-3 text-end">
 				<div class="btn-group">
 					<a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-						<img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="mdo" class="rounded-circle" width="32" height="32">
-						<span class="navbar-text">{{ user }}</span>				
+                        {% if user.socialaccount_set.all.0 %}
+						<img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" class="rounded-circle" width="32" height="32">
+                        {% else %}
+                        <img src="/static/img/user_spacer.png" class="rounded-circle" width="32" height="32">
+                        {% endif %}
+						<span class="navbar-text">{{ user }}</span>
 					</a>
 					<ul class="dropdown-menu dropdown-menu-end">
-						<li><a class="dropdown-item" href="/accounts/profile/">Profile</a></li>
+						<li><a class="dropdown-item" href="/user/profile/">Profile</a></li>
 						<li><hr class="dropdown-divider"></li>
 						<li><a class="dropdown-item" href="/accounts/logout/">Sign out</a></li>
 						
@@ -42,7 +48,7 @@
 			</div>
 			{% else %}
 			<div class="col-md-3 text-end">
-				<a class="btn btn-outline-primary me-2" href="/accounts/google/login/" role="button">Sing in</a>
+				<a class="btn btn-outline-primary me-2" href="/accounts/login/" role="button">Sing in</a>
 			</div>
 			{% endif %}
 
