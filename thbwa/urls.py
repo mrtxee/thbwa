@@ -20,13 +20,11 @@ from main import views
 
 
 urlpatterns = [
-    path('', views.home, name='a1'),
-    path('user/profile/',           views.user_profile, name='u1'),
-
+    path('', views.about, name='about'),
+    path('faq/', views.faq, name='faq'),
+    path('user/profile/', views.user_profile, name='profile'),
     path('devices/', views.devices, name='devices'),
-    path('user/pg/', views.user_playground, name='user_profile'),
-    path('api/', include('main.urls'), name='q1'),
-    # path('accounts/profile/', TemplateView.as_view(template_name="accounts_profile.html")),
-    path('accounts/', include('allauth.urls'), name='q2'),
-    path('admin/', admin.site.urls, name='q3'),
+    path('api/', include('main.urls'), name='api'),
+    path('accounts/', include('allauth.urls'), name='accounts'),
+    path('admin/', admin.site.urls, name='admin'),
 ]

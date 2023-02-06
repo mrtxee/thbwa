@@ -20,11 +20,9 @@
 			</a>
 
 			<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-				<li><a href="/" class="nav-link px-2 link-secondary">О проекте</a></li>
-				<li><a href="/devices/" class="nav-link px-2 link-dark">Мой дом</a></li>
-				<li><a href="#" class="nav-link px-2 link-dark">FAQ</a></li>
-                <li><a href="/accounts/login/" class="nav-link px-2 link-dark">signin</a></li>
-
+				<li><a href="/devices/" class="nav-link px-2 link-dark">Устройства</a></li>
+				<li><a href="/faq/"     class="nav-link px-2 link-dark">FAQ</a></li>
+                <li><a href="/"         class="nav-link px-2 link-dark">О проекте</a></li>
 			</ul>
 			
 			{% if user.is_authenticated %}
@@ -63,7 +61,7 @@
 	</main>
 
 	<footer class="footer mt-auto py-3 px-2 bg-light">
-        <div class="d-flex">
+        <div class="container d-flex">
             <div class="flex-grow-1">
                 <span class="text-muted">© 2022 Tuya Home Online, Inc</span>
             </div>

@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 dotenv_path = os.path.join(settings.BASE_DIR, '.env')
 load_dotenv(dotenv_path)
+from django.shortcuts import HttpResponseRedirect
 
 
 # noinspection DuplicatedCode
@@ -357,30 +358,6 @@ def get_TuyaCloudClient(uid: int) -> object:
         raise KeyError("bad tuya settings provided")
     return tcc
 
-def user_playground(request):
-    context = {
-        'settings': 'settings',
-        'houses': 'houses',
-        'rooms': 'rooms',
-        'devices': 'devices',
-    }
-    if UserSettings.objects.filter(pk=request.user.id).exists():
-        # settings = User_settings.objects.get(pk=request.user.id)
-        settings_dict = UserSettings.objects.filter(pk=request.user.id).values()[0]
-        # user_settigns =
-        # context['settings'] = serializers.serialize('json', [ settings ])
-        context['settings'] = f'SETTINGS: {str(settings_dict)}'
-
-        tcc = get_TuyaCloudClient(4)
-
-        result = tcc.get_user_homes()
-        print("get_user_homes:\n", json.dumps(result, indent=3, ensure_ascii=False))
-    else:
-        context['no_settings_alert'] = True
-
-    return render(request, "user_playground.html", context)
-
-
 def devices(request):
     if request.user.is_authenticated:
         head_includes = '<script defer="defer" src="/static/js/main.%s.js" bbu="%s" ui="%s"></script>' % (
@@ -391,15 +368,17 @@ def devices(request):
         }
         return render(request, "devices.html", context=context)
     else:
-        return HttpResponse("<h1>login please</h1>")
+        #return HttpResponse("<h1>login please</h1>")
+        return HttpResponseRedirect("/accounts/login/")
 
-def home(request):
+def about(request):
     context = {
-        "terminal": "",
-        #"terminal": str(request.user),
-        # "user" : request.user
+        "terminal": ""
     }
-    return render(request, "home.html", context=context)
+    return render(request, "about.html", context=context)
+
+def faq(request):
+    return render(request, "faq.html")
 
 def user_profile(request):
     context = {'form': UserSettingsForm(request.POST or None)}
