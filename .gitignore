@@ -12,3 +12,4 @@ node_modules
 **/*.log.*
 **/.env
 db.sqlite3.000
+db.sqlite3.002-bad
