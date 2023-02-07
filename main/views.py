@@ -38,8 +38,14 @@ def api(request, ACTION=None, USER_ID=None):
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
                 return JsonResponse(result)
-            TuyaHomes.objects.filter(user=USER_ID).delete()
-            result['msgs'].append('homes truncated')
+
+            # todo: clear many2many connections
+            # but not entire homes
+            # homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+            TuyaHomes.objects.filter(home_id__in=TuyaHomes.objects.filter(user=USER_ID).values('home_id'),user=USER_ID).delete()
+
+            #TuyaHomes.objects.filter( TuyaHomes.objects.filter(user=USER_ID) ).delete()
+            result['msgs'].append(f'homes truncated for {USER_ID} see mrks')
 
             homes = tcc.get_user_homes()
             cols = [f.name for f in TuyaHomes._meta.fields]
@@ -49,7 +55,12 @@ def api(request, ACTION=None, USER_ID=None):
                 row['home_id'] = int(row['home_id'])
                 row['payload'] = home
 
-                if TuyaHomes.objects.filter(user=USER_ID, home_id=home["home_id"]).exists():
+                if TuyaHomes.objects.filter(home_id=home["home_id"]).exists():
+                    if not TuyaHomes.objects.filter(user=USER_ID, home_id=home["home_id"]).exists():
+                        # если дом есть, но пользователя в нем нет, добавляем его в дом
+                        obj = TuyaHomes.objects.get(home_id=home["home_id"])
+                        obj.user.add(USER_ID)
+                        result['msgs'].append(f'record {USER_ID} joined {home["home_id"]}')
                     TuyaHomes.objects.filter(user=USER_ID, home_id=home["home_id"]).update(**row)
                     result['msgs'].append(f'record {USER_ID}.{home["home_id"]} updated')
                 else:
