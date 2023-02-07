@@ -1,6 +1,8 @@
 import json
 import logging
 from logging.handlers import RotatingFileHandler
+
+from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.conf import settings
@@ -39,13 +41,10 @@ def api(request, ACTION=None, USER_ID=None):
                 result['msgs'].append(f"Exception: {str(e)}")
                 return JsonResponse(result)
 
-            # todo: clear many2many connections
-            # but not entire homes
-            # homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id')
-            TuyaHomes.objects.filter(home_id__in=TuyaHomes.objects.filter(user=USER_ID).values('home_id'),user=USER_ID).delete()
-
+            # убираем у этого пользователя все ссылки на дома
+            User.objects.get(id=USER_ID).tuyahomes_set.clear()
             #TuyaHomes.objects.filter( TuyaHomes.objects.filter(user=USER_ID) ).delete()
-            result['msgs'].append(f'homes truncated for {USER_ID} see mrks')
+            result['msgs'].append(f'homes m2m relation truncated for {USER_ID}')
 
             homes = tcc.get_user_homes()
             cols = [f.name for f in TuyaHomes._meta.fields]
