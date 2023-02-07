@@ -29,7 +29,12 @@
             <br/>
             Last Login: {{ user.socialaccount_set.all.0.last_login}}
         </p>
-        <p class="card-text"><small class="text-muted">UID: {{ user.socialaccount_set.all.0.uid }}</small></p>
+        <p class="card-text">
+            <a href="/accounts/social/connections/" class="text-decoration-none">
+                <i class="bi bi-gear"></i> account settigns
+            </a>
+            <small class="text-muted">UID {{ user.socialaccount_set.all.0.uid }}</small>
+        </p>
       </div>
     </div>
   </div>
@@ -37,8 +42,10 @@
     <div class="card">
       <div class="card-body">
         <h5 class="card-title">Settings</h5>
-        <a href="/accounts/social/connections/" class="text-decoration-none"><i class="bi bi-gear"></i> account settigns</a>
-        <h6 class="card-subtitle mb-2 mt-3 text-muted">Tuya cloud platform access settings</h6>
+        <h6 class="card-subtitle mb-2 mt-3 fw-semibold text-muted">
+            Tuya cloud platform access settings
+            <a href="/faq/" target="_blank"><i class="bi bi-question-circle-fill"></i></a>
+        </h6>
         <form action="./" method="post" class="form">
           {% csrf_token %}  
             {% bootstrap_form form %}

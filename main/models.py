@@ -16,20 +16,7 @@ class TuyaHomeRooms(models.Model):
     room_id = models.PositiveIntegerField(primary_key=True)
     name = models.CharField(max_length=255, null=True)
     payload = models.JSONField()
-'''
-    name	"Короб"
-    icon	"smart/device_icon/eu1573240497078AokHW/53436805c44f33b65703162789996802715.png"
-    https://openapi.tuyaeu.com/smart/device_icon/eu1573240497078AokHW/53436805c44f33b65703162789996802715.png
-    https://images.tuyaeu.com/ smart/device_icon/eu1573240497078AokHW/53436805c44f33b65703162789996802715.png
-    local_key	"fc32ae0f50b57f1f"
-    category     "tgq"
-    product_id	"uwajjpe6u24lmjqf"
-    product_name	"Dimmer"
-    owner_id	"14400180"
-    payload min:620
-    room_id FK, null=true
-    uuid	"53436805c44f33b65703" PK
-'''
+
 class TuyaDeviceFunctions(models.Model):
     product_id = models.CharField(max_length=255, primary_key=True)
     category = models.CharField(max_length=255)

@@ -250,12 +250,10 @@ def api_get_device_functions(request, USER_ID=None, DEVICE_UUID=None):
         for k in range( len( result['data']['functions'] ) ):
             if result['data']['functions'][k]['values'] :
                 result['data']['functions'][k]['values'] = json.loads(result['data']['functions'][k]['values'])
-        #result['data']['functions'] = json.loads(result['data']['functions'][1]['values'])
 
     return JsonResponse(result)
 
 def api_get_device_status(request, USER_ID=None, DEVICE_UUID=None):
-    #http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
     result = {'success': True, 'msgs': [], 'data': []}
     if not DEVICE_UUID or not USER_ID:
         result['success'] = False
@@ -362,7 +360,7 @@ def devices(request):
     if request.user.is_authenticated:
         head_includes = '<script defer="defer" src="/static/js/main.%s.js" bbu="%s" ui="%s"></script>' % (
         'd1605714', os.environ.get("BACKEND_BASE_URL"), request.user.id)
-        head_includes += '<link href="/static/css/main.b3eeeea7.css" rel="stylesheet">'
+        head_includes += '<link href="/static/css/main.ff179a16.css" rel="stylesheet">'
         context = {
             'head_includes': head_includes
         }
