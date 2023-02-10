@@ -3,10 +3,10 @@ from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
-    path('v1.0/<str:ACTION>/<str:USER_ID>', views.api, name='api'),
-    path('v1.0/get_device_status/<str:USER_ID>/<str:DEVICE_UUID>', views.api_get_device_status, name='get_device_status'),
-    path('v1.0/set_device_status/<str:USER_ID>/<str:DEVICE_UUID>', views.api_set_device_status, name='set_device_status'),
-    path('v1.0/get_device_functions/<str:USER_ID>/<str:DEVICE_UUID>', views.api_get_device_functions, name='api_get_device_functions'),
+    path('v1.0/<str:ACTION>', views.api, name='api'),
+    path('v1.0/get_device_status/<str:DEVICE_UUID>', views.api_get_device_status, name='get_device_status'),
+    path('v1.0/set_device_status/<str:DEVICE_UUID>', views.api_set_device_status, name='set_device_status'),
+    path('v1.0/get_device_functions/<str:DEVICE_UUID>', views.api_get_device_functions, name='api_get_device_functions'),
 
     re_path(r'v1.0/*', views.api, name='api'),
 ]

@@ -17,34 +17,34 @@ from django.shortcuts import HttpResponseRedirect
 
 
 # noinspection DuplicatedCode
-def api(request, ACTION=None, USER_ID=None):
+def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
-    if not ACTION or not USER_ID:
+    if not ACTION or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
         return JsonResponse(result)
     else:
-        result['msgs'].append(f"do {ACTION} for {USER_ID}")
+        result['msgs'].append(f"do {ACTION} for cau")
 
     match ACTION:
         case "del_homes":
-            TuyaHomes.objects.filter(user=USER_ID).delete()
+            TuyaHomes.objects.filter(user=request.user.id).delete()
             result['msgs'].append('homes truncated')
-            # v = TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+            # v = TuyaHomes.objects.filter(user=request.user.id).values('home_id')
             # result['msgs'].append(list(v))
 
         case "load_homes":
             try:
-                tcc = get_TuyaCloudClient(USER_ID)
+                tcc = get_TuyaCloudClient(request.user.id)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
                 return JsonResponse(result)
 
             # убираем у этого пользователя все ссылки на дома
-            User.objects.get(id=USER_ID).tuyahomes_set.clear()
-            #TuyaHomes.objects.filter( TuyaHomes.objects.filter(user=USER_ID) ).delete()
-            result['msgs'].append(f'homes m2m relation truncated for {USER_ID}')
+            User.objects.get(id=request.user.id).tuyahomes_set.clear()
+            #TuyaHomes.objects.filter( TuyaHomes.objects.filter(user=request.user.id) ).delete()
+            result['msgs'].append(f'homes m2m relation truncated for {request.user.id}')
 
             homes = tcc.get_user_homes()
             cols = [f.name for f in TuyaHomes._meta.fields]
@@ -55,25 +55,25 @@ def api(request, ACTION=None, USER_ID=None):
                 row['payload'] = home
 
                 if TuyaHomes.objects.filter(home_id=home["home_id"]).exists():
-                    if not TuyaHomes.objects.filter(user=USER_ID, home_id=home["home_id"]).exists():
+                    if not TuyaHomes.objects.filter(user=request.user.id, home_id=home["home_id"]).exists():
                         # если дом есть, но пользователя в нем нет, добавляем его в дом
                         obj = TuyaHomes.objects.get(home_id=home["home_id"])
-                        obj.user.add(USER_ID)
-                        result['msgs'].append(f'record {USER_ID} joined {home["home_id"]}')
-                    TuyaHomes.objects.filter(user=USER_ID, home_id=home["home_id"]).update(**row)
-                    result['msgs'].append(f'record {USER_ID}.{home["home_id"]} updated')
+                        obj.user.add(request.user.id)
+                        result['msgs'].append(f'record {int(request.user.id)*99} joined {home["home_id"]}')
+                    TuyaHomes.objects.filter(user=request.user.id, home_id=home["home_id"]).update(**row)
+                    result['msgs'].append(f'record cau.{home["home_id"]} updated')
                 else:
                     obj = TuyaHomes.objects.create(**row)
-                    obj.user.add(USER_ID)
-                    result['msgs'].append(f'record {USER_ID}.{home["home_id"]} created')
+                    obj.user.add(request.user.id)
+                    result['msgs'].append(f'record cau.{home["home_id"]} created')
         case "load_rooms":
-            homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+            homes = TuyaHomes.objects.filter(user=request.user.id).values('home_id')
             if 1 > homes.count():
                 result['success'] = False
                 result['msgs'].append(f"no homes found")
                 return JsonResponse(result)
             try:
-                tcc = get_TuyaCloudClient(USER_ID)
+                tcc = get_TuyaCloudClient(request.user.id)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
@@ -97,7 +97,7 @@ def api(request, ACTION=None, USER_ID=None):
                         f'record {home_id}.{room["room_id"]} {"created" if is_obj_created else "updated"}')
         case "load_devices":
             try:
-                tcc = get_TuyaCloudClient(USER_ID)
+                tcc = get_TuyaCloudClient(request.user.id)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
@@ -115,7 +115,7 @@ def api(request, ACTION=None, USER_ID=None):
                 )
                 result['msgs'].append(f'record {row["uuid"]} {"created" if is_obj_created else "updated"}')
         case "set_device_rooms":
-            home_ids = TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+            home_ids = TuyaHomes.objects.filter(user=request.user.id).values('home_id')
             TuyaDevices.objects.filter(home_id__in=home_ids).update(
                 room_id=None)
             result['msgs'].append(f"'{str(list(home_ids))} house devices set room to null")
@@ -125,7 +125,7 @@ def api(request, ACTION=None, USER_ID=None):
                 result['msgs'].append(f"no rooms found")
                 return JsonResponse(result)
             try:
-                tcc = get_TuyaCloudClient(USER_ID)
+                tcc = get_TuyaCloudClient(request.user.id)
             except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
@@ -137,7 +137,7 @@ def api(request, ACTION=None, USER_ID=None):
                 TuyaDevices.objects.filter(uuid__in=room_devices_uuid_list).update(room_id=room['room_id'])
                 result['msgs'].append(f"'{str(room_devices_uuid_list)} set to room {room['room_id']}")
         case "get_devices":
-            homes = TuyaHomes.objects.filter(user=USER_ID).values('home_id', 'name', 'geo_name')
+            homes = TuyaHomes.objects.filter(user=request.user.id).values('home_id', 'name', 'geo_name')
             for home in homes:
                 rooms = list(TuyaHomeRooms.objects.filter(home_id=home['home_id']).values('home_id', 'room_id', 'name'))
                 rooms.append({
@@ -175,14 +175,14 @@ def api(request, ACTION=None, USER_ID=None):
 
         case "load_device_functions":
             try:
-                tcc = get_TuyaCloudClient(USER_ID)
-            except (KesyError, TypeError) as e:
+                tcc = get_TuyaCloudClient(request.user.id)
+            except (KeyError, TypeError) as e:
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
-                return JsonResponse(reult)
+                return JsonResponse(result)
 
             devices = TuyaDevices.objects.filter(
-                home_id__in=TuyaHomes.objects.filter(user=USER_ID).values('home_id')
+                home_id__in=TuyaHomes.objects.filter(user=request.user.id).values('home_id')
             ).values('device_id', 'product_id', 'payload', 'category')
 
             while devices:
@@ -236,20 +236,20 @@ def api(request, ACTION=None, USER_ID=None):
                 devices = devices.exclude(product_id=device["product_id"])
         case _:
             result['success'] = False
-            result['msgs'].append(f"unknown action: {ACTION} on {USER_ID}")
+            result['msgs'].append(f"unknown action: {ACTION} on cau")
     return JsonResponse(result)
 
-def api_get_device_functions(request, USER_ID=None, DEVICE_UUID=None):
+def api_get_device_functions(request, DEVICE_UUID=None):
     #http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
     result = {'success': True, 'msgs': [], 'data': []}
-    if not DEVICE_UUID or not USER_ID:
+    if not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
         return JsonResponse(result)
     else:
-        result['msgs'].append(f"do {inspect.stack()[0][3]} for {USER_ID}.{DEVICE_UUID}")
+        result['msgs'].append(f"do {inspect.stack()[0][3]} for cau.{DEVICE_UUID}")
     try:
-        tcc = get_TuyaCloudClient(USER_ID)
+        tcc = get_TuyaCloudClient(request.user.id)
     except (KeyError, TypeError) as e:
         result['success'] = False
         result['msgs'].append(f"Exception: {str(e)}")
@@ -263,16 +263,17 @@ def api_get_device_functions(request, USER_ID=None, DEVICE_UUID=None):
 
     return JsonResponse(result)
 
-def api_get_device_status(request, USER_ID=None, DEVICE_UUID=None):
+def api_get_device_status(request, DEVICE_UUID=None):
+
     result = {'success': True, 'msgs': [], 'data': []}
-    if not DEVICE_UUID or not USER_ID:
+    if not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
         return JsonResponse(result)
     else:
-        result['msgs'].append(f"do {inspect.stack()[0][3]} for {USER_ID}.{DEVICE_UUID}")
+        result['msgs'].append(f"do {inspect.stack()[0][3]} for {DEVICE_UUID}")
     try:
-        tcc = get_TuyaCloudClient(USER_ID)
+        tcc = get_TuyaCloudClient(request.user.id)
     except (KeyError, TypeError) as e:
         result['success'] = False
         result['msgs'].append(f"Exception: {str(e)}")
@@ -286,15 +287,15 @@ def api_get_device_status(request, USER_ID=None, DEVICE_UUID=None):
 
     return JsonResponse(result)
 
-def api_set_device_status(request, USER_ID=None, DEVICE_UUID=None):
+def api_set_device_status(request, DEVICE_UUID=None):
     #http://localhost:8000/api/v1.0/set_device_status/2/08003658d8bfc0522706
     result = {'success': True, 'msgs': [], 'data': []}
-    if not DEVICE_UUID or not USER_ID:
+    if not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
         return JsonResponse(result)
     else:
-        result['msgs'].append(f"do {inspect.stack()[0][3]} for {USER_ID}.{DEVICE_UUID}")
+        result['msgs'].append(f"do {inspect.stack()[0][3]} for {DEVICE_UUID}")
 
     # exec0 = {
     #         "commands": [
@@ -320,13 +321,13 @@ def api_set_device_status(request, USER_ID=None, DEVICE_UUID=None):
     #result['msgs'].append(exec0)
 
     try:
-        tcc = get_TuyaCloudClient(USER_ID)
+        tcc = get_TuyaCloudClient(request.user.id)
     except (KeyError, TypeError) as e:
         result['success'] = False
         result['msgs'].append(f"Exception: {str(e)}")
         return JsonResponse(result)
     result['data'] = tcc.exec_device_command(DEVICE_UUID, exec)
-    result['data0'] = exec
+    #result['data0'] = exec
 
     return JsonResponse(result)
 
@@ -368,8 +369,8 @@ def get_TuyaCloudClient(uid: int) -> object:
 
 def devices(request):
     if request.user.is_authenticated:
-        head_includes = '<script defer="defer" src="/static/js/main.%s.js" bbu="%s" ui="%s"></script>' % (
-        'd1605714', os.environ.get("BACKEND_BASE_URL"), request.user.id)
+        head_includes = '<script defer="defer" src="/static/js/main.%s.js" bbu="%s"></script>' % (
+        'd1605714', os.environ.get("BACKEND_BASE_URL"))
         head_includes += '<link href="/static/css/main.ff179a16.css" rel="stylesheet">'
         context = {
             'head_includes': head_includes
