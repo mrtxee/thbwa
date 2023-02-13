@@ -19,7 +19,9 @@ from django.shortcuts import HttpResponseRedirect
 # noinspection DuplicatedCode
 def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
-    if not ACTION or not request.user.is_authenticated:
+    if settings.DEBUG and not request.user.is_authenticated:
+        request.user.id = 2
+    elif not ACTION or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
         return JsonResponse(result)
@@ -241,7 +243,6 @@ def api(request, ACTION=None):
 
 def api_get_device_functions(request, DEVICE_UUID=None):
     #http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
-    result = {'success': True, 'msgs': [], 'data': []}
     if not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -264,9 +265,10 @@ def api_get_device_functions(request, DEVICE_UUID=None):
     return JsonResponse(result)
 
 def api_get_device_status(request, DEVICE_UUID=None):
-
     result = {'success': True, 'msgs': [], 'data': []}
-    if not DEVICE_UUID or not request.user.is_authenticated:
+    if settings.DEBUG and not request.user.is_authenticated:
+        request.user.id = 2
+    elif not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
         return JsonResponse(result)
