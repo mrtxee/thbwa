@@ -16,8 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView, RedirectView
+from django.views.static import serve
 from main import views
-
+from thbwa import settings
 
 urlpatterns = [
     path('', views.about, name='about'),
@@ -27,5 +28,10 @@ urlpatterns = [
     path('api/', include('main.urls'), name='api'),
     path('accounts/', include('allauth.urls'), name='accounts'),
     path('admin/', admin.site.urls, name='admin'),
-    re_path(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico', permanent=True))
+    re_path(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico', permanent=True)),
+
+    #re_path(r'^media/(?P<path>.*)$', serve,{'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
+
+

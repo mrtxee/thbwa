@@ -331,25 +331,20 @@ def api_set_device_status(request, DEVICE_UUID=None):
 
     return JsonResponse(result)
 
-# todo: see object_factory for django.py
-
-def singleton(class_):
-    instances = {}
-
-    # д.б. статик метод
-    #
-    def getinstance(*args, **kwargs):
-        if class_ not in instances:
-            instances[class_] = class_(*args, **kwargs)
-        return instances[class_]
-
-    return getinstance
-
-
-@singleton
-class TuyaCloudClientNicerSingleton(tuyacloud.TuyaCloudClientNicer):
-    pass
-
+# todo: make it less sigleton, depended on UID
+# def singleton(class_):
+#     instances = {}
+#     # д.б. статик метод
+#     def getinstance(*args, **kwargs):
+#         if class_ not in instances:
+#             instances[class_] = class_(*args, **kwargs)
+#         return instances[class_]
+#
+#     return getinstance
+#
+# @singleton
+# class TuyaCloudClientNicerSingleton(tuyacloud.TuyaCloudClientNicer):
+#     pass
 
 def get_TuyaCloudClient(uid: int) -> object:
     if 1 != UserSettings.objects.filter(pk=uid).count():
@@ -357,7 +352,7 @@ def get_TuyaCloudClient(uid: int) -> object:
 
     user_settings = UserSettings.objects.filter(pk=uid).values()[0]
     try:
-        tcc = TuyaCloudClientNicerSingleton(
+        tcc = tuyacloud.TuyaCloudClientNicer(
             ACCESS_ID=user_settings['access_id'],
             ACCESS_SECRET=user_settings['access_secret'],
             UID=user_settings['uid'],
