@@ -20,7 +20,7 @@ from django.shortcuts import HttpResponseRedirect
 def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
-        request.user.id = 2
+        request.user.id = 3
     elif not ACTION or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -118,14 +118,13 @@ def api(request, ACTION=None):
                 result['msgs'].append(f'record {row["uuid"]} {"created" if is_obj_created else "updated"}')
         case "set_device_rooms":
             home_ids = TuyaHomes.objects.filter(user=request.user.id).values('home_id')
-            TuyaDevices.objects.filter(home_id__in=home_ids).update(
-                room_id=None)
-            result['msgs'].append(f"'{str(list(home_ids))} house devices set room to null")
             rooms = TuyaHomeRooms.objects.filter(home_id__in=home_ids).values('room_id', 'home_id')
             if 1 > rooms.count():
-                result['success'] = False
-                result['msgs'].append(f"no rooms found")
+                result['msgs'].append(f"there is not rooms in the house")
                 return JsonResponse(result)
+            else:
+                TuyaDevices.objects.filter(home_id__in=home_ids).update(room_id=None)
+                result['msgs'].append(f"'{str(list(home_ids))} house devices set room to null")
             try:
                 tcc = get_TuyaCloudClient(request.user.id)
             except (KeyError, TypeError) as e:
@@ -199,9 +198,13 @@ def api(request, ACTION=None):
                 if not 'functions' in row:
                     row['functions'] = []
                 elif type(row['functions']) == list:
+
                     for k in range(len(row['functions'])):
                         if row['functions'][k]['values']:
-                            row['functions'][k]['values'] = json.loads(row['functions'][k]['values'])
+                            try:
+                                row['functions'][k]['values'] = json.loads(row['functions'][k]['values'])
+                            except (TypeError, ValueError):
+                                pass
 
                 if type(row['status']) == list:
                     for k in range( len(row['status']) ):
@@ -209,7 +212,7 @@ def api(request, ACTION=None):
                             try:
                                 row['status'][k]['value'] = json.loads(row['status'][k]['value'])
                                 #result['msgs'].append(f"{row['product_id']} json value status found")
-                            except (TypeError, ValueError) :
+                            except (TypeError, ValueError):
                                 pass
 
                 function_codes = []
@@ -267,7 +270,7 @@ def api_get_device_functions(request, DEVICE_UUID=None):
 def api_get_device_status(request, DEVICE_UUID=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
-        request.user.id = 2
+        request.user.id = 3
     elif not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
