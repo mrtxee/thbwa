@@ -46,6 +46,7 @@ def api(request, ACTION=None):
             # убираем у этого пользователя все ссылки на дома
             User.objects.get(id=request.user.id).tuyahomes_set.clear()
             #TuyaHomes.objects.filter( TuyaHomes.objects.filter(user=request.user.id) ).delete()
+
             result['msgs'].append(f'homes m2m relation truncated for {request.user.id}')
 
             homes = tcc.get_user_homes()
@@ -138,7 +139,11 @@ def api(request, ACTION=None):
                 TuyaDevices.objects.filter(uuid__in=room_devices_uuid_list).update(room_id=room['room_id'])
                 result['msgs'].append(f"'{str(room_devices_uuid_list)} set to room {room['room_id']}")
         case "get_devices":
-            homes = TuyaHomes.objects.filter(user=request.user.id).values('home_id', 'name', 'geo_name')
+            if 1==request.user.id:
+                homes = TuyaHomes.objects.values('home_id', 'name', 'geo_name')
+            else:
+                homes = TuyaHomes.objects.filter(user=request.user.id).values('home_id', 'name', 'geo_name')
+
             for home in homes:
                 rooms = list(TuyaHomeRooms.objects.filter(home_id=home['home_id']).values('home_id', 'room_id', 'name'))
                 rooms.append({
