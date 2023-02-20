@@ -20,7 +20,7 @@ from django.shortcuts import HttpResponseRedirect
 def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
-        request.user.id = 3
+        request.user.id = 2
     elif not ACTION or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -151,9 +151,9 @@ def api(request, ACTION=None):
                     'home_id': home['home_id'],
                     'name': 'default'
                 })
-
                 home['rooms'] = []
                 for room in rooms:
+                    room['passive_devices'] = []
                     devices = list(TuyaDevices.objects.filter(
                         room_id=room['room_id'], home_id=room['home_id']
                     ).values('name', 'icon_url', 'category', 'device_id', 'product_id'))
@@ -163,15 +163,27 @@ def api(request, ACTION=None):
                            .values('functions', 'status') )
                         if dfk:
                             devices[k] = devices[k] | dfk[0]
-                        else:
-                            devices[k]['functions'] = []
-                            devices[k]['status'] = []
-                        # if devices[k]['functions'] == [] and devices[k]['status'] == []:
-                        #     result['msgs'].append(f"skip passive device {devices[k]['device_id']}")
 
-                    room['devices'] = [d for d in devices if d['functions'] and d['status'] ]
+                        if devices[k]['functions'] == [] and devices[k]['status'] == []:
+                            room['passive_devices'].append(devices[k])
+                            devices[k]['status'] = [{
+                                "code" : "state",
+                                "value" : "dev"
+                            }]
+                            devices[k]['functions'] = [{
+                                "code": "state",
+                                "desc": "state",
+                                "name": "state",
+                                "type": "Readonly"
+                            }]
+                        elif devices[k]['functions'] == []:
+                            result['msgs'].append(f"skip passive device, empty functions {devices[k]['device_id']}")
+                        elif devices[k]['status'] == []:
+                            result['msgs'].append(f"skip passive device, empty status {devices[k]['device_id']}")
 
-                    if 0 < len(room['devices']):
+                    room['devices'] = [d for d in devices if d['functions'] or d['status'] ]
+
+                    if 0 < len(room['devices']) or 0 < len(room['passive_devices']):
                         if not room['room_id']:
                             room['room_id'] = 10 * room['home_id']
                         home['rooms'].append(room)
@@ -382,7 +394,6 @@ def devices(request):
         }
         return render(request, "devices.html", context=context)
     else:
-        #return HttpResponse("<h1>login please</h1>")
         return HttpResponseRedirect("/accounts/login/")
 
 def about(request):
