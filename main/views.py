@@ -7,8 +7,9 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.conf import settings
 import inspect
-import tuyacloud
-from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
+import src.tuyacloud as tuyacloud
+from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions, \
+    TuyaDeviceRemotekeys
 import os
 from dotenv import load_dotenv
 dotenv_path = os.path.join(settings.BASE_DIR, '.env')
@@ -30,11 +31,9 @@ def api(request, ACTION=None):
 
     match ACTION:
         case "del_homes":
-            TuyaHomes.objects.filter(user=request.user.id).delete()
-            result['msgs'].append('homes truncated')
-            # v = TuyaHomes.objects.filter(user=request.user.id).values('home_id')
-            # result['msgs'].append(list(v))
-
+            # TuyaHomes.objects.filter(user=request.user.id).delete()
+            User.objects.get(id=request.user.id).tuyahomes_set.clear()
+            result['msgs'].append(f'homes m2m relation truncated for {request.user.id}')
         case "load_homes":
             try:
                 tcc = get_TuyaCloudClient(request.user.id)
@@ -45,10 +44,7 @@ def api(request, ACTION=None):
 
             # убираем у этого пользователя все ссылки на дома
             User.objects.get(id=request.user.id).tuyahomes_set.clear()
-            #TuyaHomes.objects.filter( TuyaHomes.objects.filter(user=request.user.id) ).delete()
-
             result['msgs'].append(f'homes m2m relation truncated for {request.user.id}')
-
             homes = tcc.get_user_homes()
             cols = [f.name for f in TuyaHomes._meta.fields]
 
@@ -190,6 +186,42 @@ def api(request, ACTION=None):
 
                 result['data'].append(home)
                 result['msgs'].append(home['home_id'])
+
+        case "load_remotes":
+            try:
+                tcc = get_TuyaCloudClient(request.user.id)
+            except (KeyError, TypeError) as e:
+                result['success'] = False
+                result['msgs'].append(f"Exception: {str(e)}")
+                return JsonResponse(result)
+            # найти все объекты в базе с wnykq
+            devices_wnykq = TuyaDevices.objects.filter(
+                home_id__in=TuyaHomes.objects.filter(user=request.user.id).values('home_id'), category='wnykq'
+            ).values('device_id')
+            result['devices'] = json.dumps(list(devices_wnykq))
+            remote_ids = []
+            # для каждого wnykq запросить список пультов
+            cols = [f.name for f in TuyaDeviceRemotekeys._meta.fields]
+            while devices_wnykq:
+                device = devices_wnykq[0]
+                remotes = tcc.get_remote_controls(device['device_id'])
+                # todo: для каждого qt получить список команд и положить в базу insert-or-update
+                while remotes:
+                    remote_id = remotes.pop()['remote_id']
+                    result['msgs'].append(f"got remote_id {remote_id}")
+                    resp = tcc.get_remote_control_keys(device['device_id'], remote_id)
+                    row = {k: resp[k] for k in cols if k in resp}
+                    #row['device_id'] = remote_id
+                    row['payload'] = resp
+                    obj, is_obj_created = TuyaDeviceRemotekeys.objects.update_or_create(
+                        pk=remote_id, defaults=row
+                    )
+                    result['msgs'].append(
+                        f'remote_control_keys record {remote_id} {"created" if is_obj_created else "updated"}')
+
+                devices_wnykq = devices_wnykq.exclude(device_id=device["device_id"])
+
+            result['msgs'].append(f"todo here")
 
         case "load_device_functions":
             try:
