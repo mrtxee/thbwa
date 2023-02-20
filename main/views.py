@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.conf import settings
+from django.db.models import F
 import inspect
 import src.tuyacloud as tuyacloud
 from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions, \
@@ -16,8 +17,6 @@ dotenv_path = os.path.join(settings.BASE_DIR, '.env')
 load_dotenv(dotenv_path)
 from django.shortcuts import HttpResponseRedirect
 
-
-# noinspection DuplicatedCode
 def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
@@ -41,7 +40,6 @@ def api(request, ACTION=None):
                 result['success'] = False
                 result['msgs'].append(f"Exception: {str(e)}")
                 return JsonResponse(result)
-
             # убираем у этого пользователя все ссылки на дома
             User.objects.get(id=request.user.id).tuyahomes_set.clear()
             result['msgs'].append(f'homes m2m relation truncated for {request.user.id}')
@@ -149,11 +147,13 @@ def api(request, ACTION=None):
                 })
                 home['rooms'] = []
                 for room in rooms:
-                    room['passive_devices'] = []
-                    devices = list(TuyaDevices.objects.filter(
-                        room_id=room['room_id'], home_id=room['home_id']
-                    ).values('name', 'icon_url', 'category', 'device_id', 'product_id'))
+                    #room['passive_devices'] = []
 
+                    tdevices = TuyaDevices.objects.filter(room_id=room['room_id'], home_id=room['home_id']).annotate(
+                        remote_keys=F('tuyadeviceremotekeys__key_list')).values('name', 'icon_url', 'category',
+                                                                                'device_id', 'product_id',
+                                                                                'remote_keys')
+                    devices = list(tdevices)
                     for k in range( len(devices) ):
                         dfk = list( TuyaDeviceFunctions.objects.filter( product_id = devices[k]['product_id'] )
                            .values('functions', 'status') )
@@ -161,7 +161,7 @@ def api(request, ACTION=None):
                             devices[k] = devices[k] | dfk[0]
 
                         if devices[k]['functions'] == [] and devices[k]['status'] == []:
-                            room['passive_devices'].append(devices[k])
+                            #room['passive_devices'].append(devices[k])
                             devices[k]['status'] = [{
                                 "code" : "state",
                                 "value" : "dev"
@@ -176,10 +176,9 @@ def api(request, ACTION=None):
                             result['msgs'].append(f"skip passive device, empty functions {devices[k]['device_id']}")
                         elif devices[k]['status'] == []:
                             result['msgs'].append(f"skip passive device, empty status {devices[k]['device_id']}")
-
                     room['devices'] = [d for d in devices if d['functions'] or d['status'] ]
 
-                    if 0 < len(room['devices']) or 0 < len(room['passive_devices']):
+                    if 0 < len(room['devices']):
                         if not room['room_id']:
                             room['room_id'] = 10 * room['home_id']
                         home['rooms'].append(room)
