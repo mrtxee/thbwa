@@ -388,3 +388,21 @@ class TuyaCloudClient:
             raise TuyaCloudClientException("Missing Function Parameters")
         uri = 'v2.0/infrareds/%s/remotes/%s/keys' % (device_id, remote_id)
         return self.__send_request(uri=uri)
+
+    def send_remote_control_command(self, device_id=None, remote_id=None, command=None):
+        """
+        Send Key Command
+        The remote control sends an infrared code to control the specified device through key commands.
+        POST: /v2.0/infrareds/{infrared_id}/remotes/{remote_id}/raw/command
+        {
+          "category_id": 2,
+          "remote_index": 147,
+          "key": "power",
+          "key_id": 1
+        }
+        """
+        if not device_id or not remote_id or not command:
+            raise TuyaCloudClientException("Missing Function Parameters")
+
+        uri = 'v2.0/infrareds/%s/remotes/%s/raw/command' % (device_id, remote_id)
+        return self.__send_request(uri, action='POST', post=command)

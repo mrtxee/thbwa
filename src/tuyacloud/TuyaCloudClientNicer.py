@@ -99,6 +99,10 @@ class TuyaCloudClientNicer(TuyaCloudClient):
     def get_remote_control_keys(self, device_id=None, remote_id=None):
         return super().get_remote_control_keys(device_id, remote_id)
 
+    @__metada_cut_decorator  # type: ignore
+    def send_remote_control_command(self, device_id=None, remote_id=None, command=None):
+        return super().send_remote_control_command(device_id, remote_id, command)
+
     # @__metada_cut_decorator  # type: ignore
     # def exec_device_command(self, device_id=None, commands=None):
     #     return super().exec_device_command(device_id, commands)

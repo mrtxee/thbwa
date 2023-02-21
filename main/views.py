@@ -149,12 +149,20 @@ def api(request, ACTION=None):
                 for room in rooms:
                     #room['passive_devices'] = []
 
-                    tdevices = TuyaDevices.objects.filter(room_id=room['room_id'], home_id=room['home_id']).annotate(
-                        remote_keys=F('tuyadeviceremotekeys__key_list')).values('name', 'icon_url', 'category',
-                                                                                'device_id', 'product_id',
-                                                                                'remote_keys')
+                    #remote_keys = F('tuyadeviceremotekeys__key_list')).values('name', 'icon_url', 'category',
+                    tdevices = TuyaDevices.objects.filter(room_id=room['room_id'], home_id=room['home_id']).values(
+                        'name', 'icon_url', 'category', 'device_id', 'product_id', 'tuyadeviceremotekeys__key_list',
+                        'tuyadeviceremotekeys__category_id', 'tuyadeviceremotekeys__remote_index',
+                        'tuyadeviceremotekeys__parent_id')
                     devices = list(tdevices)
                     for k in range( len(devices) ):
+                        if devices[k]['tuyadeviceremotekeys__category_id'] :
+                            devices[k]["remote"] = {
+                                "category_id"   : devices[k]['tuyadeviceremotekeys__category_id'],
+                                "remote_index"  : devices[k]['tuyadeviceremotekeys__remote_index'],
+                                "key_list"      : devices[k]['tuyadeviceremotekeys__key_list'],
+                                "parent_id"     : devices[k]['tuyadeviceremotekeys__parent_id']
+                            }
                         dfk = list( TuyaDeviceFunctions.objects.filter( product_id = devices[k]['product_id'] )
                            .values('functions', 'status') )
                         if dfk:
@@ -163,15 +171,15 @@ def api(request, ACTION=None):
                         if devices[k]['functions'] == [] and devices[k]['status'] == []:
                             #room['passive_devices'].append(devices[k])
                             devices[k]['status'] = [{
-                                "code" : "state",
-                                "value" : "dev"
+                                "code" : "is_empty",
+                                "value" : True
                             }]
-                            devices[k]['functions'] = [{
-                                "code": "state",
-                                "desc": "state",
-                                "name": "state",
-                                "type": "Readonly"
-                            }]
+                            # devices[k]['functions'] = [{
+                            #     "code": "state",
+                            #     "desc": "state",
+                            #     "name": "state",
+                            #     "type": "Readonly"
+                            # }]
                         elif devices[k]['functions'] == []:
                             result['msgs'].append(f"skip passive device, empty functions {devices[k]['device_id']}")
                         elif devices[k]['status'] == []:
@@ -210,17 +218,14 @@ def api(request, ACTION=None):
                     result['msgs'].append(f"got remote_id {remote_id}")
                     resp = tcc.get_remote_control_keys(device['device_id'], remote_id)
                     row = {k: resp[k] for k in cols if k in resp}
-                    #row['device_id'] = remote_id
+                    row['parent_id'] = device['device_id']
                     row['payload'] = resp
                     obj, is_obj_created = TuyaDeviceRemotekeys.objects.update_or_create(
                         pk=remote_id, defaults=row
                     )
                     result['msgs'].append(
                         f'remote_control_keys record {remote_id} {"created" if is_obj_created else "updated"}')
-
                 devices_wnykq = devices_wnykq.exclude(device_id=device["device_id"])
-
-            result['msgs'].append(f"todo here")
 
         case "load_device_functions":
             try:
@@ -381,6 +386,37 @@ def api_set_device_status(request, DEVICE_UUID=None):
         return JsonResponse(result)
     result['data'] = tcc.exec_device_command(DEVICE_UUID, exec)
     #result['data0'] = exec
+
+    return JsonResponse(result)
+
+def api_send_rcc(request, DEVICE_UUID=None, REMOTE_UUID=None, CATEGORY_ID=None, REMOTE_INDEX=None, KEY=None, KEY_ID=None):
+    #send_remote_control_command(device_id=None, remote_id=None, command=None):
+    result = {'success': True, 'msgs': [], 'data': []}
+    if settings.DEBUG and not request.user.is_authenticated:
+        request.user.id = 2
+    elif not DEVICE_UUID or not REMOTE_UUID or not CATEGORY_ID or not REMOTE_INDEX or not KEY or not KEY_ID \
+            or not request.user.is_authenticated:
+        result['success'] = False
+        result['msgs'].append("bad query")
+        return JsonResponse(result)
+    else:
+        result['msgs'].append(f"do {inspect.stack()[0][3]} for {DEVICE_UUID}")
+
+    try:
+        tcc = get_TuyaCloudClient(request.user.id)
+    except (KeyError, TypeError) as e:
+        result['success'] = False
+        result['msgs'].append(f"Exception: {str(e)}")
+        return JsonResponse(result)
+    command = {
+        "category_id": CATEGORY_ID,
+        "remote_index": REMOTE_INDEX,
+        "key": KEY,
+        "key_id": KEY_ID
+    }
+    result['data'] = tcc.send_remote_control_command(DEVICE_UUID, REMOTE_UUID, command)
+    if False==result['data']:
+        result['data']='sent'
 
     return JsonResponse(result)
 

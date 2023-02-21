@@ -39,7 +39,9 @@ class TuyaDevices(models.Model):
 
 class TuyaDeviceRemotekeys(models.Model):
     device = models.OneToOneField(TuyaDevices, primary_key=True, on_delete=models.CASCADE)
-    #remote_index = models.PositiveIntegerField(primary_key=True, unique=True, null=False)
+    parent_id = models.CharField(max_length=64, default=None, null=False)
+    remote_index = models.PositiveIntegerField(unique=False, null=False)
+    category_id = models.PositiveIntegerField(unique=False, null=False)
     key_list = models.JSONField()
     payload = models.JSONField()
 
