@@ -206,15 +206,14 @@ def api(request, ACTION=None):
                 home_id__in=TuyaHomes.objects.filter(user=request.user.id).values('home_id'), category='wnykq'
             ).values('device_id')
             result['devices'] = json.dumps(list(devices_wnykq))
-            remote_ids = []
             # для каждого wnykq запросить список пультов
             cols = [f.name for f in TuyaDeviceRemotekeys._meta.fields]
             while devices_wnykq:
                 device = devices_wnykq[0]
-                remotes = tcc.get_remote_controls(device['device_id'])
+                remotes = tcc.get_subdevices(device['device_id'])
                 # todo: для каждого qt получить список команд и положить в базу insert-or-update
                 while remotes:
-                    remote_id = remotes.pop()['remote_id']
+                    remote_id = remotes.pop()['id']
                     result['msgs'].append(f"got remote_id {remote_id}")
                     resp = tcc.get_remote_control_keys(device['device_id'], remote_id)
                     row = {k: resp[k] for k in cols if k in resp}
@@ -418,6 +417,62 @@ def api_send_rcc(request, DEVICE_UUID=None, REMOTE_UUID=None, CATEGORY_ID=None, 
     if False==result['data']:
         result['data']='sent'
 
+    return JsonResponse(result)
+
+def boo(request, ACTION=None):
+    result = {'success': True, 'msgs': [], 'data': []}
+    if not ACTION or not request.user.is_authenticated or not 1==request.user.id:
+        result['success'] = False
+        result['msgs'].append("boo bad query")
+        return JsonResponse(result)
+    else:
+        result['msgs'].append(f"do {ACTION} for boo")
+    match ACTION:
+        case "load_remotes_all":
+            result['msgs'].append(f"get list of users")
+            users = list(User.objects.all().values('id'))
+
+            while users:
+                skip_user = False
+                user = users.pop()
+                #result['msgs'].append(f"u {user['id']}")
+
+                try:
+                    tcc = get_TuyaCloudClient(user['id'])
+                except (KeyError, TypeError) as e:
+                    result['msgs'].append(f"Exception: {str(e)}")
+                    result['msgs'].append(f"user {user['id']} skipped")
+                    skip_user = True
+                if not skip_user:
+                    result['msgs'].append(f"user {user['id']} on")
+                    # найти все объекты в базе с wnykq
+                    devices_wnykq = TuyaDevices.objects.filter(
+                        home_id__in=TuyaHomes.objects.filter(user=user['id']).values('home_id'), category='wnykq'
+                    ).values('device_id')
+                    result['msgs'].append( json.dumps(list(devices_wnykq)) )
+                    # для каждого wnykq запросить список пультов
+                    cols = [f.name for f in TuyaDeviceRemotekeys._meta.fields]
+                    while devices_wnykq:
+                        device = devices_wnykq[0]
+                        remotes = tcc.get_subdevices(device['device_id'])
+                        # todo: для каждого qt получить список команд и положить в базу insert-or-update
+                        while remotes:
+                            remote_id = remotes.pop()['id']
+                            result['msgs'].append(f"got remote_id {remote_id}")
+                            resp = tcc.get_remote_control_keys(device['device_id'], remote_id)
+                            row = {k: resp[k] for k in cols if k in resp}
+                            row['parent_id'] = device['device_id']
+                            row['payload'] = resp
+                            obj, is_obj_created = TuyaDeviceRemotekeys.objects.update_or_create(
+                                pk=remote_id, defaults=row
+                            )
+                            result['msgs'].append(
+                                f'remote_control_keys record {remote_id} {"created" if is_obj_created else "updated"}')
+                        devices_wnykq = devices_wnykq.exclude(device_id=device["device_id"])
+
+        case _:
+            result['success'] = False
+            result['msgs'].append(f"unknown action: {ACTION} on cau")
     return JsonResponse(result)
 
 # todo: make it less sigleton, depended on UID

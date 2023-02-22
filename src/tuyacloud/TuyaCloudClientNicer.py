@@ -92,8 +92,12 @@ class TuyaCloudClientNicer(TuyaCloudClient):
         return super().get_category_list()
 
     @__metada_cut_decorator  # type: ignore
-    def get_remote_controls(self, device_id=None):
-        return super().get_remote_controls(device_id)
+    def get_IRremotes(self, device_id=None):
+        return super().get_IRremotes(device_id)
+
+    @__metada_cut_decorator  # type: ignore
+    def get_subdevices(self, device_id=None):
+        return super().get_subdevices(device_id)
 
     @__metada_cut_decorator  # type: ignore
     def get_remote_control_keys(self, device_id=None, remote_id=None):

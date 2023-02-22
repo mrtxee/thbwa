@@ -26,6 +26,7 @@ urlpatterns = [
     path('user/profile/', views.user_profile, name='profile'),
     path('devices/', views.devices, name='devices'),
     path('api/', include('main.urls'), name='api'),
+    path('boo/<str:ACTION>', views.boo, name='boo'), # специальные методы с БД
     path('accounts/', include('allauth.urls'), name='accounts'),
     path('admin/', admin.site.urls, name='admin'),
     re_path(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico', permanent=True)),

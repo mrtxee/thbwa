@@ -369,7 +369,7 @@ class TuyaCloudClient:
             raise TuyaCloudClientException("Missing Function Parameters")
         return self.__send_request(uri=uri, action=action, post=post)
 
-    def get_remote_controls(self, device_id=None):
+    def get_IRremotes(self, device_id=None):
         """
         Get a list of remote controls under the specified device based on the device ID.
         GET: /v2.0/infrareds/{infrared_id}/remotes
@@ -378,6 +378,17 @@ class TuyaCloudClient:
             raise TuyaCloudClientException("Missing Function Parameters")
         uri = 'v2.0/infrareds/%s/remotes' % device_id
         return self.__send_request(uri=uri)
+
+    def get_subdevices(self, device_id=None):
+        '''
+        GET /v1.0/devices/{deviceId}/sub-devices
+        Query a list of devices under a gateway
+        '''
+        if not device_id:
+            raise TuyaCloudClientException("Missing Function Parameters")
+        uri = 'v1.0/devices/%s/sub-devices' % device_id
+        return self.__send_request(uri=uri)
+
 
     def get_remote_control_keys(self, device_id=None, remote_id=None):
         """
