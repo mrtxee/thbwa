@@ -20,7 +20,7 @@ from django.shortcuts import HttpResponseRedirect
 def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
-        request.user.id = 2
+        request.user.id = 1
     elif not ACTION or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -322,7 +322,7 @@ def api_get_device_functions(request, DEVICE_UUID=None):
 def api_get_device_status(request, DEVICE_UUID=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
-        request.user.id = 3
+        request.user.id = 1
     elif not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -392,7 +392,7 @@ def api_send_rcc(request, DEVICE_UUID=None, REMOTE_UUID=None, CATEGORY_ID=None, 
     #send_remote_control_command(device_id=None, remote_id=None, command=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
-        request.user.id = 2
+        request.user.id = 1
     elif not DEVICE_UUID or not REMOTE_UUID or not CATEGORY_ID or not REMOTE_INDEX or not KEY or not KEY_ID \
             or not request.user.is_authenticated:
         result['success'] = False
