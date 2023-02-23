@@ -21,7 +21,8 @@ from main import views
 from thbwa import settings
 
 urlpatterns = [
-    path('', views.about, name='about'),
+    path('', views.homepage, name='homepage'),
+    path('about/', views.about, name='about'),
     path('faq/', views.faq, name='faq'),
     path('user/profile/', views.user_profile, name='profile'),
     path('devices/', views.devices, name='devices'),

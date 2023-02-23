@@ -114,6 +114,7 @@ def api(request, ACTION=None):
         case "set_device_rooms":
             home_ids = TuyaHomes.objects.filter(user=request.user.id).values('home_id')
             rooms = TuyaHomeRooms.objects.filter(home_id__in=home_ids).values('room_id', 'home_id')
+            #result['rooms'] = list(rooms)
             if 1 > rooms.count():
                 result['msgs'].append(f"there is not rooms in the house")
                 return JsonResponse(result)
@@ -129,9 +130,12 @@ def api(request, ACTION=None):
             for room in rooms:
                 logger.debug(f"apply for {room['home_id']}.{room['room_id']}")
                 room_devices = tcc.get_room_devices(room['home_id'], room['room_id'])
-                room_devices_uuid_list = [room_devices[k]['uuid'] for k in range(len(room_devices))]
-                TuyaDevices.objects.filter(uuid__in=room_devices_uuid_list).update(room_id=room['room_id'])
-                result['msgs'].append(f"'{str(room_devices_uuid_list)} set to room {room['room_id']}")
+                try:
+                    room_devices_uuid_list = [room_devices[k]['uuid'] for k in range( len(room_devices) )]
+                    TuyaDevices.objects.filter(uuid__in=room_devices_uuid_list).update(room_id=room['room_id'])
+                    result['msgs'].append(f"'{str(room_devices_uuid_list)} set to room {room['room_id']}")
+                except (KeyError, TypeError) as e:
+                    result['msgs'].append('for some device no uuid found. probably due to other owner problem')
         case "get_devices":
             if 1==request.user.id:
                 homes = TuyaHomes.objects.values('home_id', 'name', 'geo_name')
@@ -524,6 +528,11 @@ def about(request):
     }
     return render(request, "about.html", context=context)
 
+def homepage(request):
+    if request.user.is_authenticated:
+        return devices(request)
+    return about(request)
+
 def faq(request):
     return render(request, "faq.html")
 
@@ -547,7 +556,6 @@ def user_profile(request):
             context['form'] = UserSettingsForm(instance=UserSettings.objects.get(pk=request.user.id))
     return render(request, "user/profile.html", context)
 
-
 def set_logger():
     logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # logger_file_handler = logging.FileHandler(f'{__name__}.log')
@@ -563,5 +571,4 @@ def set_logger():
     logger_tuya_cloud_client.addHandler(logger_file_handler)
     logger1.info(f"F_HANDLERS: {str(logging.handlers)}")
     return logger1
-
 logger = set_logger()
