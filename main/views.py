@@ -81,17 +81,23 @@ def api(request, ACTION=None):
 
             for h in homes:
                 home_id = h['home_id']
-                rooms = tcc.get_home_rooms(home_id)['rooms']
-                cols = [f.name for f in TuyaHomeRooms._meta.fields]
-                for room in rooms:
-                    row = {k: room[k] for k in cols if k in room}
-                    row['home_id'] = int(home_id)
-                    row['payload'] = room
-                    obj, is_obj_created = TuyaHomeRooms.objects.update_or_create(
-                        pk=room['room_id'], defaults=row
-                    )
-                    result['msgs'].append(
-                        f'record {home_id}.{room["room_id"]} {"created" if is_obj_created else "updated"}')
+                resp = tcc.get_home_rooms(home_id)
+                rooms = None
+                if 'rooms' in resp:
+                    rooms = resp['rooms']
+                else:
+                    result['msgs'].append(f'no rooms found in {home_id}')
+                if rooms:
+                    cols = [f.name for f in TuyaHomeRooms._meta.fields]
+                    for room in rooms:
+                        row = {k: room[k] for k in cols if k in room}
+                        row['home_id'] = int(home_id)
+                        row['payload'] = room
+                        obj, is_obj_created = TuyaHomeRooms.objects.update_or_create(
+                            pk=room['room_id'], defaults=row
+                        )
+                        result['msgs'].append(
+                            f'record {home_id}.{room["room_id"]} {"created" if is_obj_created else "updated"}')
         case "load_devices":
             try:
                 tcc = get_TuyaCloudClient(request.user.id)
