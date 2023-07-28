@@ -10,7 +10,7 @@ urlpatterns = [
     path('v1.0/set_device_status/<str:DEVICE_UUID>', views.api_set_device_status, name='set_device_status'),
     path('v1.0/get_device_functions/<str:DEVICE_UUID>', views.api_get_device_functions, name='api_get_device_functions'),
 
-    re_path(r'v1.0/*', views.api, name='api'),
+    #re_path(r'v1.0/*', views.api, name='api'),
 ]
 
 '''

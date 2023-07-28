@@ -13,9 +13,12 @@ from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, Tu
     TuyaDeviceRemotekeys
 import os
 from dotenv import load_dotenv
+from allauth.socialaccount.models import SocialAccount
+
 dotenv_path = os.path.join(settings.BASE_DIR, '.env')
 load_dotenv(dotenv_path)
 from django.shortcuts import HttpResponseRedirect
+
 
 def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
@@ -56,7 +59,7 @@ def api(request, ACTION=None):
                         # если дом есть, но пользователя в нем нет, добавляем его в дом
                         obj = TuyaHomes.objects.get(home_id=home["home_id"])
                         obj.user.add(request.user.id)
-                        result['msgs'].append(f'record {int(request.user.id)*99} joined {home["home_id"]}')
+                        result['msgs'].append(f'record {int(request.user.id) * 99} joined {home["home_id"]}')
                     TuyaHomes.objects.filter(user=request.user.id, home_id=home["home_id"]).update(**row)
                     result['msgs'].append(f'record cau.{home["home_id"]} updated')
                 else:
@@ -120,7 +123,7 @@ def api(request, ACTION=None):
         case "set_device_rooms":
             home_ids = TuyaHomes.objects.filter(user=request.user.id).values('home_id')
             rooms = TuyaHomeRooms.objects.filter(home_id__in=home_ids).values('room_id', 'home_id')
-            #result['rooms'] = list(rooms)
+            # result['rooms'] = list(rooms)
             if 1 > rooms.count():
                 result['msgs'].append(f"there is not rooms in the house")
                 return JsonResponse(result)
@@ -137,13 +140,13 @@ def api(request, ACTION=None):
                 logger.debug(f"apply for {room['home_id']}.{room['room_id']}")
                 room_devices = tcc.get_room_devices(room['home_id'], room['room_id'])
                 try:
-                    room_devices_uuid_list = [room_devices[k]['uuid'] for k in range( len(room_devices) )]
+                    room_devices_uuid_list = [room_devices[k]['uuid'] for k in range(len(room_devices))]
                     TuyaDevices.objects.filter(uuid__in=room_devices_uuid_list).update(room_id=room['room_id'])
                     result['msgs'].append(f"'{str(room_devices_uuid_list)} set to room {room['room_id']}")
                 except (KeyError, TypeError) as e:
                     result['msgs'].append('for some device no uuid found. probably due to other owner problem')
         case "get_devices":
-            if 1==request.user.id:
+            if 1 == request.user.id:
                 homes = TuyaHomes.objects.values('home_id', 'name', 'geo_name')
             else:
                 homes = TuyaHomes.objects.filter(user=request.user.id).values('home_id', 'name', 'geo_name')
@@ -157,32 +160,32 @@ def api(request, ACTION=None):
                 })
                 home['rooms'] = []
                 for room in rooms:
-                    #room['passive_devices'] = []
+                    # room['passive_devices'] = []
 
-                    #remote_keys = F('tuyadeviceremotekeys__key_list')).values('name', 'icon_url', 'category',
+                    # remote_keys = F('tuyadeviceremotekeys__key_list')).values('name', 'icon_url', 'category',
                     tdevices = TuyaDevices.objects.filter(room_id=room['room_id'], home_id=room['home_id']).values(
                         'name', 'icon_url', 'category', 'device_id', 'product_id', 'tuyadeviceremotekeys__key_list',
                         'tuyadeviceremotekeys__category_id', 'tuyadeviceremotekeys__remote_index',
                         'tuyadeviceremotekeys__parent_id')
                     devices = list(tdevices)
-                    for k in range( len(devices) ):
-                        if devices[k]['tuyadeviceremotekeys__category_id'] :
+                    for k in range(len(devices)):
+                        if devices[k]['tuyadeviceremotekeys__category_id']:
                             devices[k]["remote"] = {
-                                "category_id"   : devices[k]['tuyadeviceremotekeys__category_id'],
-                                "remote_index"  : devices[k]['tuyadeviceremotekeys__remote_index'],
-                                "key_list"      : devices[k]['tuyadeviceremotekeys__key_list'],
-                                "parent_id"     : devices[k]['tuyadeviceremotekeys__parent_id']
+                                "category_id": devices[k]['tuyadeviceremotekeys__category_id'],
+                                "remote_index": devices[k]['tuyadeviceremotekeys__remote_index'],
+                                "key_list": devices[k]['tuyadeviceremotekeys__key_list'],
+                                "parent_id": devices[k]['tuyadeviceremotekeys__parent_id']
                             }
-                        dfk = list( TuyaDeviceFunctions.objects.filter( product_id = devices[k]['product_id'] )
-                           .values('functions', 'status') )
+                        dfk = list(TuyaDeviceFunctions.objects.filter(product_id=devices[k]['product_id'])
+                                   .values('functions', 'status'))
                         if dfk:
                             devices[k] = devices[k] | dfk[0]
 
                         if devices[k]['functions'] == [] and devices[k]['status'] == []:
-                            #room['passive_devices'].append(devices[k])
+                            # room['passive_devices'].append(devices[k])
                             devices[k]['status'] = [{
-                                "code" : "is_empty",
-                                "value" : True
+                                "code": "is_empty",
+                                "value": True
                             }]
                             # devices[k]['functions'] = [{
                             #     "code": "state",
@@ -194,7 +197,7 @@ def api(request, ACTION=None):
                             result['msgs'].append(f"skip passive device, empty functions {devices[k]['device_id']}")
                         elif devices[k]['status'] == []:
                             result['msgs'].append(f"skip passive device, empty status {devices[k]['device_id']}")
-                    room['devices'] = [d for d in devices if d['functions'] or d['status'] ]
+                    room['devices'] = [d for d in devices if d['functions'] or d['status']]
 
                     if 0 < len(room['devices']):
                         if not room['room_id']:
@@ -203,6 +206,18 @@ def api(request, ACTION=None):
 
                 result['data'].append(home)
                 result['msgs'].append(home['home_id'])
+        case "get_context":
+            context = {}
+            context['is_authenticated'] = request.user.is_authenticated
+            if context['is_authenticated']:
+                context['rui'] = request.user.id
+                context['name'] = request.user.username
+                context['avatar_url'] = None
+                if SocialAccount.objects.filter(user=request.user).count() > 0:
+                    context['avatar_url'] = SocialAccount.objects.get(user=request.user).extra_data['picture']
+                    context['name'] = SocialAccount.objects.get(user=request.user).extra_data['name']
+            result['data'] = context
+
 
         case "load_remotes":
             try:
@@ -269,26 +284,26 @@ def api(request, ACTION=None):
                                 pass
 
                 if type(row['status']) == list:
-                    for k in range( len(row['status']) ):
+                    for k in range(len(row['status'])):
                         if row['status'][k]['value']:
                             try:
                                 row['status'][k]['value'] = json.loads(row['status'][k]['value'])
-                                #result['msgs'].append(f"{row['product_id']} json value status found")
+                                # result['msgs'].append(f"{row['product_id']} json value status found")
                             except (TypeError, ValueError):
                                 pass
 
                 function_codes = []
-                if 0<len(row['functions']):
-                    function_codes = [ row['functions'][j]['code'] for j in range( len(row['functions']) ) ]
-                if 0<len(row['status']):
+                if 0 < len(row['functions']):
+                    function_codes = [row['functions'][j]['code'] for j in range(len(row['functions']))]
+                if 0 < len(row['status']):
                     for st in row['status']:
                         if st['code'] not in function_codes:
                             row['functions'].append({
-                                'code' : st['code'],
-                                'desc' : st['code'],
-                                'name' : st['code'],
-                                'type' : "Readonly",
-                                'values' : {}
+                                'code': st['code'],
+                                'desc': st['code'],
+                                'name': st['code'],
+                                'type': "Readonly",
+                                'values': {}
                             })
                 # if len(status_codes) > len(function_codes):
                 #     result['msgs'].append(f"{row['product_id']} status-functions ISSUE")
@@ -306,8 +321,10 @@ def api(request, ACTION=None):
             result['msgs'].append(f"unknown action: {ACTION} on cau")
     return JsonResponse(result)
 
+
 def api_get_device_functions(request, DEVICE_UUID=None):
-    #http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
+    # http://localhost:8000/api/v1.0/get_device_status/2/08003658d8bfc0522706
+    result = {'success': True, 'msgs': [], 'data': []}
     if not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
@@ -323,11 +340,12 @@ def api_get_device_functions(request, DEVICE_UUID=None):
     result['data'] = tcc.get_device_functions(DEVICE_UUID)
 
     if type(result['data']['functions']) == list:
-        for k in range( len( result['data']['functions'] ) ):
-            if result['data']['functions'][k]['values'] :
+        for k in range(len(result['data']['functions'])):
+            if result['data']['functions'][k]['values']:
                 result['data']['functions'][k]['values'] = json.loads(result['data']['functions'][k]['values'])
 
     return JsonResponse(result)
+
 
 def api_get_device_status(request, DEVICE_UUID=None):
     result = {'success': True, 'msgs': [], 'data': []}
@@ -350,12 +368,13 @@ def api_get_device_status(request, DEVICE_UUID=None):
     result['data'] = {}
     if list == type(resp_raw):
         for k in range(len(resp_raw)):
-            result['data'][resp_raw[k]['code']]=resp_raw[k]['value']
+            result['data'][resp_raw[k]['code']] = resp_raw[k]['value']
 
     return JsonResponse(result)
 
+
 def api_set_device_status(request, DEVICE_UUID=None):
-    #http://localhost:8000/api/v1.0/set_device_status/2/08003658d8bfc0522706
+    # http://localhost:8000/api/v1.0/set_device_status/2/08003658d8bfc0522706
     result = {'success': True, 'msgs': [], 'data': []}
     if not DEVICE_UUID or not request.user.is_authenticated:
         result['success'] = False
@@ -384,8 +403,8 @@ def api_set_device_status(request, DEVICE_UUID=None):
             "value": req[key]
         })
     exec = {"commands": commands}
-    #result['exec']=commands
-    #result['msgs'].append(exec0)
+    # result['exec']=commands
+    # result['msgs'].append(exec0)
 
     try:
         tcc = get_TuyaCloudClient(request.user.id)
@@ -394,12 +413,14 @@ def api_set_device_status(request, DEVICE_UUID=None):
         result['msgs'].append(f"Exception: {str(e)}")
         return JsonResponse(result)
     result['data'] = tcc.exec_device_command(DEVICE_UUID, exec)
-    #result['data0'] = exec
+    # result['data0'] = exec
 
     return JsonResponse(result)
 
-def api_send_rcc(request, DEVICE_UUID=None, REMOTE_UUID=None, CATEGORY_ID=None, REMOTE_INDEX=None, KEY=None, KEY_ID=None):
-    #send_remote_control_command(device_id=None, remote_id=None, command=None):
+
+def api_send_rcc(request, DEVICE_UUID=None, REMOTE_UUID=None, CATEGORY_ID=None, REMOTE_INDEX=None, KEY=None,
+                 KEY_ID=None):
+    # send_remote_control_command(device_id=None, remote_id=None, command=None):
     result = {'success': True, 'msgs': [], 'data': []}
     if settings.DEBUG and not request.user.is_authenticated:
         request.user.id = 1
@@ -424,14 +445,15 @@ def api_send_rcc(request, DEVICE_UUID=None, REMOTE_UUID=None, CATEGORY_ID=None, 
         "key_id": KEY_ID
     }
     result['data'] = tcc.send_remote_control_command(DEVICE_UUID, REMOTE_UUID, command)
-    if False==result['data']:
-        result['data']='sent'
+    if False == result['data']:
+        result['data'] = 'sent'
 
     return JsonResponse(result)
 
+
 def boo(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
-    if not ACTION or not request.user.is_authenticated or not 1==request.user.id:
+    if not ACTION or not request.user.is_authenticated or not 1 == request.user.id:
         result['success'] = False
         result['msgs'].append("boo bad query")
         return JsonResponse(result)
@@ -445,7 +467,7 @@ def boo(request, ACTION=None):
             while users:
                 skip_user = False
                 user = users.pop()
-                #result['msgs'].append(f"u {user['id']}")
+                # result['msgs'].append(f"u {user['id']}")
 
                 try:
                     tcc = get_TuyaCloudClient(user['id'])
@@ -459,7 +481,7 @@ def boo(request, ACTION=None):
                     devices_wnykq = TuyaDevices.objects.filter(
                         home_id__in=TuyaHomes.objects.filter(user=user['id']).values('home_id'), category='wnykq'
                     ).values('device_id')
-                    result['msgs'].append( json.dumps(list(devices_wnykq)) )
+                    result['msgs'].append(json.dumps(list(devices_wnykq)))
                     # для каждого wnykq запросить список пультов
                     cols = [f.name for f in TuyaDeviceRemotekeys._meta.fields]
                     while devices_wnykq:
@@ -484,6 +506,7 @@ def boo(request, ACTION=None):
             result['success'] = False
             result['msgs'].append(f"unknown action: {ACTION} on cau")
     return JsonResponse(result)
+
 
 # todo: make it less sigleton, depended on UID
 # def singleton(class_):
@@ -516,10 +539,11 @@ def get_TuyaCloudClient(uid: int) -> object:
         raise KeyError("bad tuya settings provided")
     return tcc
 
+
 def devices(request):
     if request.user.is_authenticated:
         head_includes = '<script defer="defer" src="/static/js/main.%s.js" bbu="%s"></script>' % (
-        'd1605714', os.environ.get("BACKEND_BASE_URL"))
+            'd1605714', os.environ.get("BACKEND_BASE_URL"))
         head_includes += '<link href="/static/css/main.ff179a16.css" rel="stylesheet">'
         context = {
             'head_includes': head_includes
@@ -528,19 +552,23 @@ def devices(request):
     else:
         return HttpResponseRedirect("/accounts/login/")
 
+
 def about(request):
     context = {
         "terminal": ""
     }
     return render(request, "about.html", context=context)
 
+
 def homepage(request):
     if request.user.is_authenticated:
         return devices(request)
     return about(request)
 
+
 def faq(request):
     return render(request, "faq.html")
+
 
 def user_profile(request):
     context = {'form': UserSettingsForm(request.POST or None)}
@@ -562,6 +590,7 @@ def user_profile(request):
             context['form'] = UserSettingsForm(instance=UserSettings.objects.get(pk=request.user.id))
     return render(request, "user/profile.html", context)
 
+
 def set_logger():
     logger_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # logger_file_handler = logging.FileHandler(f'{__name__}.log')
@@ -577,4 +606,6 @@ def set_logger():
     logger_tuya_cloud_client.addHandler(logger_file_handler)
     logger1.info(f"F_HANDLERS: {str(logging.handlers)}")
     return logger1
+
+
 logger = set_logger()
