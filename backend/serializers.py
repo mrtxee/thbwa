@@ -21,3 +21,7 @@ class TuyaHomesSerializer(serializers.HyperlinkedModelSerializer):
         model = TuyaHomes
         fields = ['home_id', 'name', 'geo_name']
 
+class YourSerializer(serializers.Serializer):
+   """Your data serializer, define your fields here."""
+   comments = serializers.IntegerField()
+   likes = serializers.IntegerField()
