@@ -26,6 +26,7 @@ urlpatterns = [
     path('faq/', views.faq, name='faq'),
     path('user/profile/', views.user_profile, name='profile'),
     path('devices/', views.devices, name='devices'),
+    path('api/v2/', include('backend.urls'), name='api2'),
     path('api/', include('main.urls'), name='api'),
     path('boo/<str:ACTION>', views.boo, name='boo'), # специальные методы с БД
     path('accounts/', include('allauth.urls'), name='accounts'),
