@@ -1,6 +1,11 @@
-from django.urls import path, re_path
-
+from django.urls import include, path, re_path
+from rest_framework import routers
 from . import views
+
+router = routers.DefaultRouter()
+router.register(r'users', views.UserViewSet)
+router.register(r'groups', views.GroupViewSet)
+router.register(r'homes', views.TuyaHomesViewSet)
 
 urlpatterns = [
     path('v1.0/<str:ACTION>', views.api, name='api'),
@@ -9,6 +14,9 @@ urlpatterns = [
     path('v1.0/get_device_status/<str:DEVICE_UUID>', views.api_get_device_status, name='get_device_status'),
     path('v1.0/set_device_status/<str:DEVICE_UUID>', views.api_set_device_status, name='set_device_status'),
     path('v1.0/get_device_functions/<str:DEVICE_UUID>', views.api_get_device_functions, name='api_get_device_functions'),
+    #DJANGO RESTAPI EX
+    path('v2/', include(router.urls)),
+    path('v2/auth/', include('rest_framework.urls', namespace='rest_framework')),
 
     #re_path(r'v1.0/*', views.api, name='api'),
 ]

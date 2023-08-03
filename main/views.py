@@ -14,10 +14,50 @@ from .models import UserSettings, UserSettingsForm, TuyaHomes, TuyaHomeRooms, Tu
 import os
 from dotenv import load_dotenv
 from allauth.socialaccount.models import SocialAccount
+from django.contrib.auth.models import User, Group
+from rest_framework import viewsets
+from rest_framework import permissions
+from rest_framework import generics
+from .serializers import UserSerializer, GroupSerializer, TuyaHomesSerializer
 
 dotenv_path = os.path.join(settings.BASE_DIR, '.env')
 load_dotenv(dotenv_path)
 from django.shortcuts import HttpResponseRedirect
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows groups to be viewed or edited.
+    """
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class TuyaHomesViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows groups to be viewed or edited.
+    """
+    queryset = TuyaHomes.objects.all()
+    serializer_class = TuyaHomesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+# class TuyaHomesList(generics.ListAPIView):
+#     serializer_class = TuyaHomesSerializer
+#     def get_queryset(self):
+#         """
+#         This view should return a list of all the purchases
+#         for the currently authenticated user.
+#         """
+#         request = self.request
+#         return TuyaHomes.objects.filter(user=request.user.id).values('home_id', 'name', 'geo_name')
 
 
 def api(request, ACTION=None):
