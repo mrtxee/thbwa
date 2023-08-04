@@ -22,9 +22,8 @@ from django.shortcuts import HttpResponseRedirect
 
 def api(request, ACTION=None):
     result = {'success': True, 'msgs': [], 'data': []}
-    if settings.DEBUG and not request.user.is_authenticated:
-        request.user.id = 1
-    elif not ACTION or not request.user.is_authenticated:
+    result['msgs'].append(f"auth {request.user.is_authenticated}")
+    if not ACTION or not request.user.is_authenticated:
         result['success'] = False
         result['msgs'].append("bad query")
         return JsonResponse(result)
