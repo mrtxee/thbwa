@@ -31,8 +31,12 @@ urlpatterns = [
     path('accounts/', include('allauth.urls'), name='accounts'),
     path('admin/', admin.site.urls, name='admin'),
 
+    path('rest-auth/', include('rest_auth.urls'), name='restauth'),
+
     path('api/v2.0/', include('backend.urls'), name='api2'),
     path('api/v1.0/', include('main.urls'), name='api'),
+
+
 
     re_path(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico', permanent=True)),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
