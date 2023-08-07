@@ -1,25 +1,31 @@
+import json
 
 from django.contrib.auth.models import User
+from google.auth.transport import requests
+from google.oauth2 import id_token
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+
 from backend.serializers import UserSerializer, TuyaHomesSerializer
 from main.models import TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
-from google.auth import jwt
-import json
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
 class TuyaHomesViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TuyaHomesSerializer
     queryset = TuyaHomes.objects.all().order_by('home_id')
+
     def get_queryset(self):
         queryset = self.queryset
         query_set = queryset.filter(user=self.request.user.id).values('home_id', 'name', 'geo_name')
         return query_set
+
 
 """ todo: API endpoint to perform some action.
     Filtered over the current user
@@ -29,35 +35,33 @@ class TuyaHomesViewSet(viewsets.ReadOnlyModelViewSet):
     Filtered over the current user
 """
 
-client_id = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
-secret = 'xxx-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'
+CLIENT_ID = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
+SECRET = 'xxx-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'
 
-def decode_jwt(encoded):
-    client_id = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
-    secret = 'xxx-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'
-    claims = jwt.decode(encoded, verify=False)
-    return claims
+
+def validateDecodeGoogleJWT(token):
+    try:
+        data = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+        data['is_valid_token'] = True
+    except ValueError:
+        data['is_valid_token'] = False
+    return data
+
 
 class AuthLoginGoogleViewSet(ViewSet):
     def list(self, request, *args, **kw):
-        context = {'google':'login'}
+        context = {'google': 'login'}
         response = Response(context)
         return response
 
     def create(self, request):
-        data = {'its':'ok'}
-        requestBodyJson = json.loads(request.body)
+        data = {'its': 'ok'}
+        requestBodyJson = json.loads(request.body);
         if 'credential' in requestBodyJson:
-            #data = {'its': jwt.decode(requestBodyJson['credential'], verify=False)}
-            data = jwt.decode(requestBodyJson['credential'], verify=False)
-
-            #data = json.loads(request.body.credential)
-            #data = json.loads(decode_jwt(request.body.credential))
+            data = validateDecodeGoogleJWT(requestBodyJson['credential'])
 
         response = Response(data)
         return response
-
-
 
 
 class HomesViewSet(ViewSet):
@@ -65,6 +69,7 @@ class HomesViewSet(ViewSet):
         context = fetchHomes(request)
         response = Response(context)
         return response
+
 
 def fetchHomes(request):
     result = {'success': True, 'msgs': [], 'data': []}
@@ -121,4 +126,3 @@ def fetchHomes(request):
         result['data'].append(home)
         result['msgs'].append(home['home_id'])
     return result
-
