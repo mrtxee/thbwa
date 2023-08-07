@@ -5,15 +5,13 @@ from . import views
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
-
 router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
 router.register(r'auth/login/google', views.AuthLoginGoogleViewSet, 'AuthLoginGoogleViewSet'),
 
-
 urlpatterns = [
     path('', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('rest/', include('rest_framework.urls', namespace='rest_framework')),
 ]
 '''
 +get_devices                             -> GET /api/v2.0/homes

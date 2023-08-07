@@ -1,15 +1,21 @@
 import json
 
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from rest_framework import viewsets, permissions
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
 from backend.serializers import UserSerializer, TuyaHomesSerializer
 from main.models import TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
 
+
+# https://django.fun/ru/docs/django-rest-framework/3.12/api-guide/authentication/
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
@@ -40,6 +46,7 @@ SECRET = 'xxx-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'
 
 
 def validateDecodeGoogleJWT(token):
+    data = {}
     try:
         data = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
         data['is_valid_token'] = True
@@ -48,7 +55,22 @@ def validateDecodeGoogleJWT(token):
     return data
 
 
+class ExampleView(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        content = {
+            'user': str(request.user),  # `django.contrib.auth.User` instance.
+            'auth': str(request.auth),  # None
+        }
+        return Response(content)
+
+
 class AuthLoginGoogleViewSet(ViewSet):
+    #authentication_classes = [SessionAuthentication, BasicAuthentication]
+    #permission_classes = [IsAuthenticated]
+
     def list(self, request, *args, **kw):
         context = {'google': 'login'}
         response = Response(context)
@@ -56,11 +78,15 @@ class AuthLoginGoogleViewSet(ViewSet):
 
     def create(self, request):
         data = {'its': 'ok'}
-        requestBodyJson = json.loads(request.body);
+        requestBodyJson = json.loads(request.body)
         if 'credential' in requestBodyJson:
             data = validateDecodeGoogleJWT(requestBodyJson['credential'])
+            # data['sss2'] = {
+            #     'user': str(request.user),  # `django.contrib.auth.User` instance.
+            #     'auth': str(request.auth),  # None
+            # }
 
-        response = Response(data)
+        response = JsonResponse(data)
         return response
 
 
