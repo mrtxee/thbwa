@@ -1,33 +1,18 @@
-from django.contrib.auth.models import User, Group
-from backend.serializers import UserSerializer, GroupSerializer, TuyaHomesSerializer, YourSerializer
-from main.models import TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
-
+from django.contrib.auth.models import User
 from rest_framework import viewsets, permissions
-from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet
-from rest_framework import status
 from rest_framework.response import Response
-from rest_framework import serializers
+from rest_framework.viewsets import ViewSet
+from backend.serializers import UserSerializer, TuyaHomesSerializer
+from main.models import TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
+from google.auth import jwt
+import json
 
 class UserViewSet(viewsets.ModelViewSet):
-    """ API endpoint that allows groups to be viewed or edited.
-    """
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-
-class GroupViewSet(viewsets.ModelViewSet):
-    """ API endpoint that allows groups to be viewed or edited.
-    """
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
 class TuyaHomesViewSet(viewsets.ReadOnlyModelViewSet):
-    """ API endpoint that allows groups to be viewed or edited.
-        Filtered over the current user
-    """
     serializer_class = TuyaHomesSerializer
     queryset = TuyaHomes.objects.all().order_by('home_id')
     def get_queryset(self):
@@ -42,17 +27,46 @@ class TuyaHomesViewSet(viewsets.ReadOnlyModelViewSet):
 """ todo: API endpoint to read-only result.
     Filtered over the current user
 """
+client_id = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
+secret = 'xxx-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'
 
-class HomesViewSet(ViewSet):
+def decode_jwt(encoded):
+    client_id = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
+    secret = 'xxx-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'
+    claims = jwt.decode(encoded, verify=False)
+    return claims
+
+class AuthLoginGoogleViewSet(ViewSet):
     def list(self, request, *args, **kw):
-        context = get_devices(request)
+        context = {'google':'login'}
         response = Response(context)
         return response
 
+    def create(self, request):
+        data = {'its':'ok'}
+        requestBodyJson = json.loads(request.body)
+        if 'credential' in requestBodyJson:
+            #data = {'its': jwt.decode(requestBodyJson['credential'], verify=False)}
+            data = jwt.decode(requestBodyJson['credential'], verify=False)
 
-def get_devices(request):
+            #data = json.loads(request.body.credential)
+            #data = json.loads(decode_jwt(request.body.credential))
+
+        response = Response(data)
+        return response
+
+
+
+
+class HomesViewSet(ViewSet):
+    def list(self, request, *args, **kw):
+        context = fetchHomes(request)
+        response = Response(context)
+        return response
+
+def fetchHomes(request):
     result = {'success': True, 'msgs': [], 'data': []}
-
+    result['msgs'].append(f"rui = {request.user.id}")
     # if 1 == request.user.id:
     #     homes = TuyaHomes.objects.values('home_id', 'name', 'geo_name')
     # else:

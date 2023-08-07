@@ -4,12 +4,14 @@ from . import views
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
-router.register(r'groups', views.GroupViewSet, 'GroupViewSet')
+router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
+router.register(r'auth/login/google', views.AuthLoginGoogleViewSet, 'AuthLoginGoogleViewSet'),
+
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
 '''
 +get_devices                             -> GET /api/v2.0/homes
@@ -17,7 +19,8 @@ urlpatterns = [
 /set_device_status/<str:DEVICE_UUID>     -> POST /api/v2.0/devices/<str:DEVICE_UUID>/status
 /get_device_functions/<str:DEVICE_UUID>  -> GET /api/v2.0/devices/<str:DEVICE_UUID>/functions
 /send_rcc/<str:DEVICE_UUID>/<str:REMOTE_UUID>/<str:CATEGORY_ID>/<str:REMOTE_INDEX>/<str:KEY>/<str:KEY_ID>
-                                            -> POST /api/v2.0/devices/<str:DEVICE_UUID>/send_rcc {/<str:REMOTE_UUID>/<str:CATEGORY_ID>/<str:REMOTE_INDEX>/<str:KEY>/<str:KEY_ID>}
+                                          -> POST /api/v2.0/devices/<str:DEVICE_UUID>/send_rcc
+                                             {/<str:REMOTE_UUID>/<str:CATEGORY_ID>/<str:REMOTE_INDEX>/<str:KEY>/<str:KEY_ID>}
 load_homes              -> PUT /homes/update 
 load_rooms              -> PUT /rooms/update
 load_devices            -> PUT /devices/update
