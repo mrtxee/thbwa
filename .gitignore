@@ -11,5 +11,6 @@ node_modules
 **/*.log
 **/*.log.*
 **/.env
+**/.env.json
 db.sqlite*
 tmp
