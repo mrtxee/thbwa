@@ -1,9 +1,7 @@
-from django.urls import include, path, re_path
-from django.http import HttpResponse
+from django.urls import include, path
 from rest_framework import routers
+
 from . import views
-from .views import MyRESTView
-from django.contrib.auth.decorators import login_required
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
