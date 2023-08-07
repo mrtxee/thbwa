@@ -1,3 +1,4 @@
+
 from django.contrib.auth.models import User
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
@@ -27,6 +28,7 @@ class TuyaHomesViewSet(viewsets.ReadOnlyModelViewSet):
 """ todo: API endpoint to read-only result.
     Filtered over the current user
 """
+
 client_id = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
 secret = 'xxx-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'
 

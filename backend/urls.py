@@ -1,9 +1,13 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.http import HttpResponse
 from rest_framework import routers
 from . import views
+from .views import MyRESTView
+from django.contrib.auth.decorators import login_required
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
+
 router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
 router.register(r'auth/login/google', views.AuthLoginGoogleViewSet, 'AuthLoginGoogleViewSet'),
@@ -29,10 +33,4 @@ load_device_functions   -> PUT /devices/functions/update
 load_remotes            -> PUT /devices/remotes/update
 del_homes               -> 0
 get_context             -> 0
-'''
-
-'''
-SAMPLES OF urlpatterns
-    path('del_homes/', lambda request: HttpResponse('del_homes'), name='del_homes'),
-    re_path(r'^myview[/]?$', login_required(MyRESTView.as_view()), name='myview'),
 '''
