@@ -1,9 +1,4 @@
-import json
-
 from django.contrib.auth.models import User
-from django.http import JsonResponse
-from google.auth.transport import requests
-from google.oauth2 import id_token
 from rest_framework import viewsets, permissions
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +8,30 @@ from rest_framework.viewsets import ViewSet
 
 from backend.serializers import UserSerializer, TuyaHomesSerializer
 from main.models import TuyaHomes, TuyaHomeRooms, TuyaDevices, TuyaDeviceFunctions
+
+
+class UserPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if view.action == 'list':
+            return request.user.is_authenticated() and request.user.is_admin
+        elif view.action == 'create':
+            return True
+        elif view.action in ['retrieve', 'update', 'partial_update', 'destroy']:
+            return True
+        else:
+            return False
+    # def has_object_permission(self, request, view, obj):
+    #     # Deny actions on objects if the user is not authenticated
+    #     if not request.user.is_authenticated():
+    #         return False
+    #     if view.action == 'retrieve':
+    #         return obj == request.user or request.user.is_admin
+    #     elif view.action in ['update', 'partial_update']:
+    #         return obj == request.user or request.user.is_admin
+    #     elif view.action == 'destroy':
+    #         return request.user.is_admin
+    #     else:
+    #         return False
 
 
 # https://django.fun/ru/docs/django-rest-framework/3.12/api-guide/authentication/
@@ -41,19 +60,6 @@ class TuyaHomesViewSet(viewsets.ReadOnlyModelViewSet):
     Filtered over the current user
 """
 
-CLIENT_ID = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
-SECRET = 'xxx-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'
-
-
-def validateDecodeGoogleJWT(token):
-    data = {}
-    try:
-        data = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
-        data['is_valid_token'] = True
-    except ValueError:
-        data['is_valid_token'] = False
-    return data
-
 
 class ExampleView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
@@ -65,29 +71,6 @@ class ExampleView(APIView):
             'auth': str(request.auth),  # None
         }
         return Response(content)
-
-
-class AuthLoginGoogleViewSet(ViewSet):
-    #authentication_classes = [SessionAuthentication, BasicAuthentication]
-    #permission_classes = [IsAuthenticated]
-
-    def list(self, request, *args, **kw):
-        context = {'google': 'login'}
-        response = Response(context)
-        return response
-
-    def create(self, request):
-        data = {'its': 'ok'}
-        requestBodyJson = json.loads(request.body)
-        if 'credential' in requestBodyJson:
-            data = validateDecodeGoogleJWT(requestBodyJson['credential'])
-            # data['sss2'] = {
-            #     'user': str(request.user),  # `django.contrib.auth.User` instance.
-            #     'auth': str(request.auth),  # None
-            # }
-
-        response = JsonResponse(data)
-        return response
 
 
 class HomesViewSet(ViewSet):

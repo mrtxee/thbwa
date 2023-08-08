@@ -38,18 +38,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'main',
     'django.contrib.sites',
+
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'django_bootstrap5',
-
     'corsheaders',
-
     'rest_framework',
+    'rest_framework.authtoken',
+
+    'main',
+    'backend',
 ]
 
 REST_FRAMEWORK = {
@@ -156,9 +157,11 @@ LOGIN_REDIRECT_URL = '/devices/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/#HP'
 ACCOUNT_SIGNUP_REDIRECT_URL = '/user/profile/'
 ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_USERNAME_MIN_LENGTH = 5
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "none"
+REST_USE_JWT = True
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
