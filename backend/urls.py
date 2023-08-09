@@ -10,20 +10,18 @@ router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
 router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
+router.register(r'auth/login/google/jwt', auth_views.AuthLoginGoogleUserinfoJwtViewSet, 'AuthLoginGoogleViewSet'),
 router.register(r'auth/login/google', auth_views.AuthLoginGoogleViewSet, 'AuthLoginGoogleViewSet'),
+router.register(r'auth/login', auth_views.AuthLoginViewSet, 'AuthLoginViewSet'),
 router.register(r'test403', auth_views.Test403ResponseViewSet, 'TestResponseViewSet'),
 ''' todo:
 backend/auth
-POST/api/v2.0/auth/login
-    basic login
-    return token
-+POST/api/v2.0/auth/login/google
-    return token
-GET /api/v2.0/auth/logout
-    remove token?
-    return ok to del token on backend
-GET /api/v2.0/auth/token
-GET /api/v2.0/auth/token/validate
+ POST/api/v2.0/auth/login            # basic login; return token
+=GET /api/v2.0/auth/login            # return userdata by token
++POST/api/v2.0/auth/login/google/jwt
++POST/api/v2.0/auth/login/google    # return token
+ GET /api/v2.0/auth/logout          # remove token; return removal status
+
 '''
 
 
@@ -56,7 +54,7 @@ PUT /api/v2.0/rooms/devices/update
 //////
 
 
-+get_devices                             -> GET /api/v2.0/homes
+/get_devices                             ->+GET /api/v2.0/homes
 /get_device_status/<str:DEVICE_UUID>     -> GET /api/v2.0/devices/<str:DEVICE_UUID>/status
 /set_device_status/<str:DEVICE_UUID>     -> POST/api/v2.0/devices/<str:DEVICE_UUID>/status
 /get_device_functions/<str:DEVICE_UUID>  -> GET /api/v2.0/devices/<str:DEVICE_UUID>/functions
