@@ -6,8 +6,6 @@ from allauth import utils
 from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
@@ -17,8 +15,29 @@ CLIENT_ID = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent
 
 
 class AuthLoginViewSet(viewsets.ViewSet):
+    def list1(self, request, *args, **kw):
+        pass
+
     def list(self, request, *args, **kw):
         data = {'user': 'data'}
+        data['token_is'] = '222'
+        data['HTTP_AUTHORIZATION'] = request.META["HTTP_AUTHORIZATION"]
+        #check is conains 'Token'
+        if not 'Token ' in request.META["HTTP_AUTHORIZATION"]:
+            return Response(None, status.HTTP_403_FORBIDDEN)
+        # check token exists
+        if not Token.objects.filter(key=request.META["HTTP_AUTHORIZATION"].split()[1]).exists():
+            return Response(None, status.HTTP_401_UNAUTHORIZED)
+        user = Token.objects.get(key=request.META["HTTP_AUTHORIZATION"].split()[1]).user
+        social_account = SocialAccount.objects.filter(user_id=user.id).values('extra_data')
+        if len(social_account) < 1:
+            return Response(None, status.HTTP_401_UNAUTHORIZED)
+        data = {
+            'name': social_account[0]["extra_data"]["name"],
+            'username': user.username,
+            'picture': social_account[0]["extra_data"]["picture"],
+            'email': social_account[0]["extra_data"]["email"],
+        }
         response = JsonResponse(data)
         return response
 
@@ -31,29 +50,9 @@ class AuthLoginGoogleViewSet(viewsets.ViewSet):
                 'Authorization': f'{requestBodyJson["token_type"]} {requestBodyJson["access_token"]}'}).json()))
 
 
-class AuthLoginGoogleUserinfoJwtViewSet(viewsets.ViewSet):
-    def create(self, request):
-        requestBodyJson = json.loads(request.body)
-        if not 'credential' in requestBodyJson:
-            return Response(None, status.HTTP_401_UNAUTHORIZED)
-        data = validateDecodeGoogleJWT(requestBodyJson['credential'])
-        if not data['is_valid_googlejwt']:
-            return Response(None, status.HTTP_401_UNAUTHORIZED)
-        return JsonResponse(createOrGetUserDataByGoogleUserInfo(data['userinfo']))
-    # def list(self, request, *args, **kw):
-    # def update(self, request, pk=None):
-    # def partial_update(self, request, pk=None):
-    # def destroy(self, request, pk=None):
-    # def retrieve(self, request, pk=None):
-    #     data = {'its': 'ok'}
-    #     response = JsonResponse(data)
-    #     return response
-
-
 class Test403ResponseViewSet(viewsets.ViewSet):
     def list(self, request, *args, **kw):
-        response = Response(None, status.HTTP_401_UNAUTHORIZED)
-        return response
+        return Response(None, status.HTTP_401_UNAUTHORIZED)
 
 
 def createOrGetUserDataByGoogleUserInfo(userinfo):
@@ -62,7 +61,6 @@ def createOrGetUserDataByGoogleUserInfo(userinfo):
         'username': '',
         'picture': userinfo['picture'],
         'email': userinfo['email'],
-        'sub': userinfo['sub'],
     }
     social_account = SocialAccount.objects.filter(uid=userinfo['sub']).values('user_id')
     user_id = 0
@@ -96,17 +94,4 @@ def createOrGetUserDataByGoogleUserInfo(userinfo):
         data['name'] = data['username']
     token, created = Token.objects.get_or_create(user_id=user_id)
     data['token'] = token.key
-    return data
-
-
-def validateDecodeGoogleJWT(token):
-    data = {
-        'credentials': token,
-        'userinfo': '',
-        'is_valid_googlejwt': True
-    }
-    try:
-        data['userinfo'] = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
-    except ValueError:
-        data['is_valid_googlejwt'] = False
     return data

@@ -10,7 +10,6 @@ router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
 router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
-router.register(r'auth/login/google/jwt', auth_views.AuthLoginGoogleUserinfoJwtViewSet, 'AuthLoginGoogleViewSet'),
 router.register(r'auth/login/google', auth_views.AuthLoginGoogleViewSet, 'AuthLoginGoogleViewSet'),
 router.register(r'auth/login', auth_views.AuthLoginViewSet, 'AuthLoginViewSet'),
 router.register(r'test403', auth_views.Test403ResponseViewSet, 'TestResponseViewSet'),
