@@ -4,8 +4,6 @@ from rest_framework import routers
 from . import views
 from .auth import auth_views
 
-# from .views import GoogleLogin
-
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
 router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
@@ -15,14 +13,12 @@ router.register(r'auth/login', auth_views.AuthLoginViewSet, 'AuthLoginViewSet'),
 router.register(r'test403', auth_views.Test403ResponseViewSet, 'TestResponseViewSet'),
 ''' todo:
 backend/auth
- POST/api/v2.0/auth/login            # basic login; return token
-=GET /api/v2.0/auth/login            # return userdata by token
-+POST/api/v2.0/auth/login/google/jwt
 +POST/api/v2.0/auth/login/google    # return token
++POST/api/v2.0/auth/login           # basic login; return token
++GET /api/v2.0/auth/login           # return userdata by token
  GET /api/v2.0/auth/logout          # remove token; return removal status
 
 '''
-
 
 urlpatterns = [
     path('', include(router.urls)),
