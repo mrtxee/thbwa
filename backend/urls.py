@@ -2,21 +2,31 @@ from django.urls import include, path
 from rest_framework import routers
 
 from . import views
-from .auth import auth_views
+from .auth import auth_views as auth
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
 router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
-router.register(r'auth/login/google', auth_views.AuthLoginGoogleViewSet, 'AuthLoginGoogleViewSet'),
-router.register(r'auth/login', auth_views.AuthLoginViewSet, 'AuthLoginViewSet'),
-router.register(r'test403', auth_views.Test403ResponseViewSet, 'TestResponseViewSet'),
+router.register(r'auth/login/google', auth.LoginGoogleViewSet, 'LoginGoogleViewSet'),
+router.register(r'auth/login', auth.LoginViewSet, 'LoginViewSet'),
+router.register(r'auth/register', auth.RegisterViewSet, 'RegisterViewSet'),
+router.register(r'auth/uniquecheck', auth.UniqueUserNameCheckerViewSet, 'UniqueUserNameCheckerViewSet'),
+router.register(r'auth/newpassword', auth.NewPasswordViewSet, 'NewPasswordViewSet'),
+
+router.register(r'test403', auth.Test403ResponseViewSet, 'TestResponseViewSet'),
 ''' todo:
 backend/auth
 +POST/api/v2.0/auth/login/google    # return token
 +POST/api/v2.0/auth/login           # basic login; return token
 +GET /api/v2.0/auth/login           # return userdata by token
+ POST/api/v2.0/auth/register        # register; return token
+ POST/api/v2.0/auth/uniquecheck     # uniquecheck; return token
+ POST/api/v2.0/auth/newpassword     # newpassword; return token
+
+
  GET /api/v2.0/auth/logout          # remove token; return removal status
+
 
 '''
 
