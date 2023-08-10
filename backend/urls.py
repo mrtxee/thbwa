@@ -11,18 +11,18 @@ router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
 router.register(r'auth/login/google', auth.LoginGoogleViewSet, 'LoginGoogleViewSet'),
 router.register(r'auth/login', auth.LoginViewSet, 'LoginViewSet'),
-router.register(r'auth/logout/all', auth.LogoutEverywhereViewSet, 'LogoutViewSet'),
+router.register(r'auth/logout/all', auth.LogoutEverywhereViewSet, 'LogoutEverywhereViewSet'),
 router.register(r'auth/register', auth.RegisterViewSet, 'RegisterViewSet'),
 router.register(r'auth/uniquecheck', auth.UniqueUserNameCheckerViewSet, 'UniqueUserNameCheckerViewSet'),
-router.register(r'auth/newpassword', auth.NewPasswordViewSet, 'NewPasswordViewSet'),
+router.register(r'auth/newpass', auth.NewPasswordViewSet, 'NewPasswordViewSet'),
+router.register(r'auth/resetpass', auth.ResetPasswordViewSet, 'ResetPasswordViewSet'),
 
 router.register(r'test403', auth.Test403ResponseViewSet, 'TestResponseViewSet'),
-''' todo:
-backend/auth
+''' todo: backend/auth viewsets collection
 +POST/api/v2.0/auth/login/google    # return token
 +POST/api/v2.0/auth/login           # basic login; return token
 +GET /api/v2.0/auth/login           # return userdata by token
-+GET /api/v2.0/auth/logout          # remove token;
++GET /api/v2.0/auth/logout/all      # remove token; exit on all_devices
 +POST/api/v2.0/auth/register        # register; return token
 +POST/api/v2.0/auth/uniquecheck     # uniquecheck; return bool
  POST/api/v2.0/auth/newpass         # new password
@@ -35,8 +35,6 @@ backend/auth
 urlpatterns = [
     path('', include(router.urls)),
     path('rest/', include('rest_framework.urls', namespace='rest_framework')),
-    # path("dj-rest-auth/google/login/", GoogleLoginView.as_view(), name="google_login"
-    # path('rest/google', GoogleLogin.as_view(), name='google_login'),
 ]
 '''
 todo:
