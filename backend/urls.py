@@ -7,9 +7,11 @@ from .auth import auth_views as auth
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet, 'UserViewSet')
 router.register(r'tuya_homes', views.TuyaHomesViewSet, 'TuyaHomesViewSet'),
+
 router.register(r'homes', views.HomesViewSet, 'HomesViewSet'),
 router.register(r'auth/login/google', auth.LoginGoogleViewSet, 'LoginGoogleViewSet'),
 router.register(r'auth/login', auth.LoginViewSet, 'LoginViewSet'),
+router.register(r'auth/logout/all', auth.LogoutEverywhereViewSet, 'LogoutViewSet'),
 router.register(r'auth/register', auth.RegisterViewSet, 'RegisterViewSet'),
 router.register(r'auth/uniquecheck', auth.UniqueUserNameCheckerViewSet, 'UniqueUserNameCheckerViewSet'),
 router.register(r'auth/newpassword', auth.NewPasswordViewSet, 'NewPasswordViewSet'),
@@ -20,12 +22,12 @@ backend/auth
 +POST/api/v2.0/auth/login/google    # return token
 +POST/api/v2.0/auth/login           # basic login; return token
 +GET /api/v2.0/auth/login           # return userdata by token
- POST/api/v2.0/auth/register        # register; return token
- POST/api/v2.0/auth/uniquecheck     # uniquecheck; return token
- POST/api/v2.0/auth/newpassword     # newpassword; return token
++GET /api/v2.0/auth/logout          # remove token;
++POST/api/v2.0/auth/register        # register; return token
++POST/api/v2.0/auth/uniquecheck     # uniquecheck; return bool
+ POST/api/v2.0/auth/newpass         # new password
+ POST/api/v2.0/auth/resetpass       # send mail for new pw if token is ok
 
-
- GET /api/v2.0/auth/logout          # remove token; return removal status
 
 
 '''

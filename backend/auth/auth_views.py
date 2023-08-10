@@ -17,7 +17,7 @@ CLIENT_ID = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent
 
 class NewPasswordViewSet(viewsets.ViewSet):
     def create(self, request):
-        return JsonResponse(request.data)
+        return Response(None, status.HTTP_501_NOT_IMPLEMENTED)
 
 
 class UniqueUserNameCheckerViewSet(viewsets.ViewSet):
@@ -70,9 +70,9 @@ class LoginViewSet(viewsets.ViewSet):
         userdata = Userdata(username=user.username)
         social_account = SocialAccount.objects.filter(uid=user.id).values('user_id')
         if len(social_account) < 1:
-            userdata.name = user.username  # todo: fix it
-            userdata.email = user.email  # todo: fix it пустоле мыло, или стандартное?
-            # todo: установить в рабочей базе стандартную почту для всех
+            userdata.name = _getNameByUser(user)
+            userdata.email = _getEmailByUser(user)
+            # todo: установить в рабочей базе стандартную почту для юзеров с пустой почтой
         else:
             userdata.name = social_account[0]["extra_data"]["name"]
             userdata.picture = social_account[0]["extra_data"]["picture"]
@@ -90,19 +90,32 @@ class LoginViewSet(viewsets.ViewSet):
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user
         social_account = SocialAccount.objects.filter(user_id=user.id).values('extra_data')
-        if len(social_account) < 1:
-            return Response('inconsistent data', status.HTTP_406_NOT_ACCEPTABLE)
-        userdata = Userdata(username=user.username,
-                            name=social_account[0]["extra_data"]["name"],
-                            picture=social_account[0]["extra_data"]["picture"],
-                            email=social_account[0]["extra_data"]["email"])
+        userdata = Userdata(username=user.username)
+        if len(social_account) > 0:
+            userdata.name = social_account[0]["extra_data"]["name"]
+            userdata.picture = social_account[0]["extra_data"]["picture"]
+            userdata.email = social_account[0]["extra_data"]["email"]
+        else:
+            userdata.name = _getNameByUser(user)
+            userdata.email = _getEmailByUser(user)
         response = JsonResponse(userdata.dict())
+        return response
+
+
+class LogoutEverywhereViewSet(viewsets.ViewSet):
+    def list(self, request, *args, **kw):
+        if not 'HTTP_AUTHORIZATION' in request.META:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not 'Token ' in request.META['HTTP_AUTHORIZATION']:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        data = Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).delete()
+        response = Response(data)
         return response
 
 
 class LoginGoogleViewSet(viewsets.ViewSet):
     def create(self, request):
-        return JsonResponse(createOrGetUserDataByGoogleUserInfo(
+        return JsonResponse(_createOrGetUserDataByGoogleUserInfo(
             requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers={
                 'Authorization': f'{request.data["token_type"]} {request.data["access_token"]}'}).json()).dict())
 
@@ -112,7 +125,16 @@ class Test403ResponseViewSet(viewsets.ViewSet):
         return Response('4xx test', status.HTTP_401_UNAUTHORIZED)
 
 
-def createOrGetUserDataByGoogleUserInfo(userinfo):
+def _getEmailByUser(user):
+    return user.email if len(user.email.strip()) > 0 else f"{user.username}@mailto.plus"
+
+
+def _getNameByUser(user):
+    return f"{user.first_name} {user.last_name}".strip() if len(
+        f"{user.first_name}{user.last_name}".strip()) > 0 else user.username
+
+
+def _createOrGetUserDataByGoogleUserInfo(userinfo):
     userdata = Userdata(name=userinfo['name'], picture=userinfo['picture'], email=userinfo['email'])
     social_account = SocialAccount.objects.filter(uid=userinfo['sub']).values('user_id')
     if len(social_account) < 1:
