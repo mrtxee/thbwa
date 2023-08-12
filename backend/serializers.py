@@ -3,10 +3,12 @@ from rest_framework import serializers
 
 from main.models import TuyaHomes
 
+
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email']
+
 
 class TuyaHomesSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

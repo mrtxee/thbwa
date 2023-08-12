@@ -1,28 +1,54 @@
 import datetime
+import json
 from dataclasses import dataclass, asdict
 
 import requests
 from allauth import utils
 from allauth.socialaccount.models import SocialAccount
+from dacite import from_dict
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.core import serializers
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
+from main.models import UserSettings
+
 CLIENT_ID = '93483542407-ckrg8q5q527dmcd62ptg0am5j9jhvesb.apps.googleusercontent.com'
 
 
 class NewPasswordViewSet(viewsets.ViewSet):
     def create(self, request):
-        return Response(None, status.HTTP_501_NOT_IMPLEMENTED)
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if 'Token ' not in request.META['HTTP_AUTHORIZATION']:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
+            return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
+        if 'username' not in request.data or 'password' not in request.data:
+            return Response(None, status.HTTP_403_FORBIDDEN)
+        user = authenticate(request, username=request.data['username'], password=request.data['old_password'])
+        if not user:
+            return Response('bad credentials', status.HTTP_401_UNAUTHORIZED)
+        token_user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
+        if request.data['username'] != user.username or user.id != token_user_id:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        user.set_password(request.data['password'])
+        user.save()
+        return Response()
 
 
 class ResetPasswordViewSet(viewsets.ViewSet):
     def create(self, request):
-        return Response(None, status.HTTP_501_NOT_IMPLEMENTED)
+        if 'email' not in request.data:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not User.objects.filter(email=request.data['email']).exists():
+            return Response('email is not registered', status.HTTP_417_EXPECTATION_FAILED)
+        # todo: make emailSendingCall here
+        return Response()
 
 
 class UniqueUserNameCheckerViewSet(viewsets.ViewSet):
@@ -53,11 +79,66 @@ class RegisterViewSet(viewsets.ViewSet):
             first_name=request.data['first_name'],
             last_name=request.data['last_name'],
         )
-        userdata = Userdata(username=request.data['username'], email=request.data['email'],
-                            name=f"{request.data['last_name']} {request.data['first_name']}"
-                            )
+        userdata = UserLoginData(username=request.data['username'],
+                                 name=f"{request.data['last_name']} {request.data['first_name']}"
+                                 )
         userdata.token = Token.objects.get_or_create(user_id=user.id)[0].key
         return JsonResponse(userdata.dict())
+
+
+class UserViewSet(viewsets.ViewSet):
+    def list(self, request, *args, **kw):
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if 'Token ' not in request.META['HTTP_AUTHORIZATION']:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
+            return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
+        user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
+        user_data = UserData()
+        if User.objects.filter(pk=user_id).exists():
+            user = User.objects.filter(pk=user_id)
+            user_data = from_dict(UserData, json.loads(serializers.serialize("json", user))[0]['fields'])
+        return JsonResponse(user_data.dict())
+
+    def create(self, request):
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if 'Token ' not in request.META['HTTP_AUTHORIZATION']:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
+            return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
+        user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
+        obj = User.objects.filter(id=user_id).update(**request.data)
+        return Response()
+
+
+class UserSettingsViewSet(viewsets.ViewSet):
+    def list(self, request, *args, **kw):
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if 'Token ' not in request.META['HTTP_AUTHORIZATION']:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
+            return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
+        user = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user
+        user_settings_data = UserSettingsData()
+        if UserSettings.objects.filter(user_id=user.id).exists():
+            user_settings = UserSettings.objects.filter(user_id=user.id)
+            user_settings_data = from_dict(UserSettingsData,
+                                           json.loads(serializers.serialize("json", user_settings))[0]['fields'])
+        return JsonResponse(user_settings_data.dict())
+
+    def create(self, request):
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if 'Token ' not in request.META['HTTP_AUTHORIZATION']:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
+            return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
+        user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
+        obj, created = UserSettings.objects.update_or_create(user_id=user_id, defaults=request.data)
+        return Response()
 
 
 class LoginViewSet(viewsets.ViewSet):
@@ -67,15 +148,13 @@ class LoginViewSet(viewsets.ViewSet):
         user = authenticate(request, username=request.data['username'], password=request.data['password'])
         if not user:
             return Response('bad credentials', status.HTTP_401_UNAUTHORIZED)
-        userdata = Userdata(username=user.username)
+        userdata = UserLoginData(username=user.username)
         social_account = SocialAccount.objects.filter(uid=user.id).values('user_id')
         if len(social_account) < 1:
             userdata.set_name_by_user(user)
-            userdata.set_email_by_user(user)
         else:
             userdata.name = social_account[0]["extra_data"]["name"]
             userdata.picture = social_account[0]["extra_data"]["picture"]
-            userdata.email = social_account[0]["extra_data"]["email"]
         userdata.token = Token.objects.get_or_create(user_id=user.id)[0].key
         return Response(userdata.dict())
 
@@ -88,14 +167,12 @@ class LoginViewSet(viewsets.ViewSet):
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user
         social_account = SocialAccount.objects.filter(user_id=user.id).values('extra_data')
-        userdata = Userdata(username=user.username)
+        userdata = UserLoginData(username=user.username)
         if len(social_account) > 0:
             userdata.name = social_account[0]["extra_data"]["name"]
             userdata.picture = social_account[0]["extra_data"]["picture"]
-            userdata.email = social_account[0]["extra_data"]["email"]
         else:
             userdata.set_name_by_user(user)
-            userdata.set_email_by_user(user)
         response = JsonResponse(userdata.dict())
         return response
 
@@ -119,7 +196,7 @@ class LoginGoogleViewSet(viewsets.ViewSet):
                 'Authorization': f'{request.data["token_type"]} {request.data["access_token"]}'}).json()).dict())
 
     def _get_userdata_by_google_userinfo(self, userinfo):
-        userdata = Userdata(name=userinfo['name'], picture=userinfo['picture'], email=userinfo['email'])
+        userdata = UserLoginData(name=userinfo['name'], picture=userinfo['picture'])
         social_account = SocialAccount.objects.filter(uid=userinfo['sub']).values('user_id')
         if len(social_account) < 1:
             user = self._get_created_user(userinfo)
@@ -164,21 +241,45 @@ class Test403ResponseViewSet(viewsets.ViewSet):
 
 
 @dataclass
-class Userdata:
+class UserLoginData:
     username: str = ''
     name: str = ''
     picture: str = ''
-    email: str = ''
     token: str = ''
 
     def set_name_by_user(self, user):
         self.name = f"{user.first_name} {user.last_name}".strip() if len(
             f"{user.first_name}{user.last_name}".strip()) > 0 else user.username
 
-    def set_email_by_user(self, user):
-        self.email = user.email if len(user.email.strip()) > 0 else f"{user.username}@mailto.plus"
+    def dict(self):
+        if not self.username or not self.name:
+            raise ValueError()
+        return asdict(self)
+
+
+@dataclass
+class UserData():
+    username: str = ''
+    last_login: str = ''
+    date_joined: str = ''
+    last_name: str = ''
+    email: str = ''
+    first_name: str = ''
 
     def dict(self):
-        if not self.username or not self.name or not self.email:
+        self.date_joined = self.date_joined.split('T')[0] if 'T' in self.date_joined else self.date_joined
+        self.last_login = self.last_login.split('T')[0] if 'T' in self.last_login else self.last_login
+        if not self.username:
             raise ValueError()
+        return asdict(self)
+
+
+@dataclass
+class UserSettingsData:
+    access_id: str = ''
+    access_secret: str = ''
+    uid: str = ''
+    endpoint_url: str = ''
+
+    def dict(self):
         return asdict(self)

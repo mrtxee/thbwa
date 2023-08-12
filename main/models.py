@@ -1,6 +1,7 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.forms import ModelForm
+
 
 class TuyaHomes(models.Model):
     user = models.ManyToManyField(settings.AUTH_USER_MODEL)
@@ -9,11 +10,13 @@ class TuyaHomes(models.Model):
     geo_name = models.CharField(max_length=255, null=True)
     payload = models.JSONField()
 
+
 class TuyaHomeRooms(models.Model):
     home = models.ForeignKey(TuyaHomes, on_delete=models.CASCADE, null=False, unique=False)
     room_id = models.PositiveIntegerField(primary_key=True)
     name = models.CharField(max_length=255, null=True)
     payload = models.JSONField()
+
 
 class TuyaDeviceFunctions(models.Model):
     product_id = models.CharField(max_length=255, primary_key=True)
@@ -37,6 +40,7 @@ class TuyaDevices(models.Model):
     local_key = models.CharField(max_length=255, null=False)
     payload = models.JSONField()
 
+
 class TuyaDeviceRemotekeys(models.Model):
     device = models.OneToOneField(TuyaDevices, primary_key=True, on_delete=models.CASCADE)
     parent_id = models.CharField(max_length=64, default=None, null=False)
@@ -44,6 +48,7 @@ class TuyaDeviceRemotekeys(models.Model):
     category_id = models.PositiveIntegerField(unique=False, null=False)
     key_list = models.JSONField()
     payload = models.JSONField()
+
 
 TUYA_CLOUD_ENDPOINTS = (
     ('openapi.tuyaus.com', 'America'),
@@ -53,6 +58,7 @@ TUYA_CLOUD_ENDPOINTS = (
     ('openapi-ueaz.tuyaus.com', 'EasternAmerica'),
     ('openapi-weaz.tuyaeu.com', 'WesternEurope'),
 )
+
 
 class UserSettings(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, primary_key=True, on_delete=models.CASCADE)

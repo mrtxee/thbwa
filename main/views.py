@@ -145,7 +145,7 @@ def api(request, ACTION=None):
                     result['msgs'].append(f"'{str(room_devices_uuid_list)} set to room {room['room_id']}")
                 except (KeyError, TypeError) as e:
                     result['msgs'].append('for some device no uuid found. probably due to other owner problem')
-        case "get_devices":
+        case "get_devices": # api v20 migrated
             if 1 == request.user.id:
                 homes = TuyaHomes.objects.values('home_id', 'name', 'geo_name')
             else:
