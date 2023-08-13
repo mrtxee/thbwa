@@ -234,12 +234,6 @@ class LoginGoogleViewSet(viewsets.ViewSet):
         })
         return user
 
-
-class Test403ResponseViewSet(viewsets.ViewSet):
-    def list(self, request, *args, **kw):
-        return Response('4xx test', status.HTTP_401_UNAUTHORIZED)
-
-
 @dataclass
 class UserLoginData:
     username: str = ''

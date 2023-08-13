@@ -2,6 +2,7 @@ from dataclasses import dataclass, asdict
 
 from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework import viewsets
@@ -9,6 +10,61 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
 from main.models import TuyaDeviceFunctions, TuyaDevices, TuyaHomeRooms, TuyaHomes
+from main.views import get_TuyaCloudClient
+
+
+class NotImplementedViewSet(viewsets.ViewSet):
+    def list(self, request, *args, **kw):
+        return Response(None, status.HTTP_400_BAD_REQUEST)
+    def put(self, request, *args, **kw):
+        return Response(request.data, status.HTTP_501_NOT_IMPLEMENTED)
+
+
+class HomesLoadViewSet(viewsets.ViewSet):
+    def list(self, request, *args, **kw):
+        return Response(None, status.HTTP_400_BAD_REQUEST)
+    def put(self, request, *args, **kw):
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if 'Token ' not in request.META['HTTP_AUTHORIZATION']:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
+        if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
+            return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
+        user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
+        res = self.load_homes(user_id)
+        return Response(res)
+
+    def load_homes(self, user_id):
+        result = {'success': True, 'msgs': [], 'data': []}
+        try:
+            tcc = get_TuyaCloudClient(user_id)
+        except (KeyError, TypeError) as e:
+            result['success'] = False
+            result['msgs'].append(f"Exception: {str(e)}")
+            return JsonResponse(result)
+        # убираем у этого пользователя все ссылки на дома
+        User.objects.get(id=user_id).tuyahomes_set.clear()
+        result['msgs'].append(f'homes m2m relation truncated for {user_id}')
+        homes = tcc.get_user_homes()
+        cols = [f.name for f in TuyaHomes._meta.fields]
+
+        for home in homes:
+            row = {k: home[k] for k in cols if k in home}
+            row['home_id'] = int(row['home_id'])
+            row['payload'] = home
+            if TuyaHomes.objects.filter(home_id=home["home_id"]).exists():
+                if not TuyaHomes.objects.filter(user=user_id, home_id=home["home_id"]).exists():
+                    # если дом есть, но пользователя в нем нет, добавляем его в дом
+                    obj = TuyaHomes.objects.get(home_id=home["home_id"])
+                    obj.user.add(user_id)
+                    result['msgs'].append(f'record {int(user_id) * 99} joined {home["home_id"]}')
+                TuyaHomes.objects.filter(user=user_id, home_id=home["home_id"]).update(**row)
+                result['msgs'].append(f'record cau.{home["home_id"]} updated')
+            else:
+                obj = TuyaHomes.objects.create(**row)
+                obj.user.add(user_id)
+                result['msgs'].append(f'record cau.{home["home_id"]} created')
+        return result
 
 
 class HomesViewSet(viewsets.ViewSet):
@@ -76,57 +132,3 @@ class HomesViewSet(viewsets.ViewSet):
             result['data'].append(home)
             result['msgs'].append(home['home_id'])
         return result
-
-
-# delete that below = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-class LoginViewSet(viewsets.ViewSet):
-    def create(self, request):
-        if 'username' not in request.data or 'password' not in request.data:
-            return Response(None, status.HTTP_403_FORBIDDEN)
-        user = authenticate(request, username=request.data['username'], password=request.data['password'])
-        if not user:
-            return Response('bad credentials', status.HTTP_401_UNAUTHORIZED)
-        userdata = UserLoginData(username=user.username)
-        social_account = SocialAccount.objects.filter(uid=user.id).values('user_id')
-        if len(social_account) < 1:
-            userdata.set_name_by_user(user)
-        else:
-            userdata.name = social_account[0]["extra_data"]["name"]
-            userdata.picture = social_account[0]["extra_data"]["picture"]
-        userdata.token = Token.objects.get_or_create(user_id=user.id)[0].key
-        return Response(userdata.dict())
-
-    def list(self, request, *args, **kw):
-        if 'HTTP_AUTHORIZATION' not in request.META:
-            return Response(None, status.HTTP_400_BAD_REQUEST)
-        if 'Token ' not in request.META['HTTP_AUTHORIZATION']:
-            return Response(None, status.HTTP_400_BAD_REQUEST)
-        if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
-            return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
-        user = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user
-        social_account = SocialAccount.objects.filter(user_id=user.id).values('extra_data')
-        userdata = UserLoginData(username=user.username)
-        if len(social_account) > 0:
-            userdata.name = social_account[0]["extra_data"]["name"]
-            userdata.picture = social_account[0]["extra_data"]["picture"]
-        else:
-            userdata.set_name_by_user(user)
-        response = JsonResponse(userdata.dict())
-        return response
-
-
-@dataclass
-class UserLoginData:
-    username: str = ''
-    name: str = ''
-    picture: str = ''
-    token: str = ''
-
-    def set_name_by_user(self, user):
-        self.name = f"{user.first_name} {user.last_name}".strip() if len(
-            f"{user.first_name}{user.last_name}".strip()) > 0 else user.username
-
-    def dict(self):
-        if not self.username or not self.name:
-            raise ValueError()
-        return asdict(self)
