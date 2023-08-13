@@ -31,23 +31,20 @@ class HomesLoadViewSet(viewsets.ViewSet):
         if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
-        res = self.load_homes(user_id)
-        return Response(res)
-
-    def load_homes(self, user_id):
-        result = {'success': True, 'msgs': [], 'data': []}
         try:
             tcc = get_TuyaCloudClient(user_id)
         except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return JsonResponse(result)
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
+        res = self.load_homes(user_id, tcc)
+        return Response(res)
+
+    def load_homes(self, user_id, tcc):
+        result = {'success': True, 'msgs': [], 'data': []}
         # убираем у этого пользователя все ссылки на дома
         User.objects.get(id=user_id).tuyahomes_set.clear()
         result['msgs'].append(f'homes m2m relation truncated for {user_id}')
         homes = tcc.get_user_homes()
         cols = [f.name for f in TuyaHomes._meta.fields]
-
         for home in homes:
             row = {k: home[k] for k in cols if k in home}
             row['home_id'] = int(row['home_id'])
@@ -84,7 +81,6 @@ class HomesViewSet(viewsets.ViewSet):
     def fetchHomes(self, user_id):
         result = {'success': True, 'msgs': [], 'data': []}
         result['msgs'].append(f"rui = {user_id}")
-
         homes = TuyaHomes.objects.filter(user=user_id).values('home_id', 'name', 'geo_name')
         for home in homes:
             rooms = list(TuyaHomeRooms.objects.filter(home_id=home['home_id']).values('home_id', 'room_id', 'name'))
@@ -123,12 +119,10 @@ class HomesViewSet(viewsets.ViewSet):
                     elif devices[k]['status'] == []:
                         result['msgs'].append(f"skip passive device, empty status {devices[k]['device_id']}")
                 room['devices'] = [d for d in devices if d['functions'] or d['status']]
-
                 if 0 < len(room['devices']):
                     if not room['room_id']:
                         room['room_id'] = 10 * room['home_id']
                     home['rooms'].append(room)
-
             result['data'].append(home)
             result['msgs'].append(home['home_id'])
         return result

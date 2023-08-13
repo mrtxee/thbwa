@@ -21,18 +21,15 @@ class DevicesRemotesLoadViewSet(viewsets.ViewSet):
         if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
-        res = self.load_device_remotes(user_id)
-        # todo: CHEK-N-RETURN:return Response('irrelevant tuya credentials', status.HTTP_423_LOCKED)
-        return Response(res)
-
-    def load_device_remotes(self, user_id):
-        result = {'success': True, 'msgs': [], 'data': []}
         try:
             tcc = get_TuyaCloudClient(user_id)
         except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
+        res = self.load_device_remotes(user_id, tcc)
+        return Response(res)
+
+    def load_device_remotes(self, user_id, tcc):
+        result = {'success': True, 'msgs': [], 'data': []}
         # найти все объекты в базе с wnykq
         devices_wnykq = TuyaDevices.objects.filter(
             home_id__in=TuyaHomes.objects.filter(user=user_id).values('home_id'), category='wnykq'
@@ -71,18 +68,16 @@ class DevicesFunctionsLoadViewSet(viewsets.ViewSet):
         if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
-        res = self.load_device_functions(user_id)
-        # todo: CHEK-N-RETURN:return Response('irrelevant tuya credentials', status.HTTP_423_LOCKED)
-        return Response(res)
-
-    def load_device_functions(self, user_id):
-        result = {'success': True, 'msgs': [], 'data': []}
         try:
             tcc = get_TuyaCloudClient(user_id)
         except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
+        res = self.load_device_functions(user_id, tcc)
+        return Response(res)
+
+    def load_device_functions(self, user_id, tcc):
+        result = {'success': True, 'msgs': [], 'data': []}
+
         devices = TuyaDevices.objects.filter(
             home_id__in=TuyaHomes.objects.filter(user=user_id).values('home_id')
         ).values('device_id', 'product_id', 'payload', 'category')
@@ -146,18 +141,15 @@ class DevicesLoadViewSet(viewsets.ViewSet):
         if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
-        res = self.load_devices(user_id)
-        # todo: CHEK-N-RETURN:return Response('irrelevant tuya credentials', status.HTTP_423_LOCKED)
-        return Response(res)
-
-    def load_devices(self, user_id):
-        result = {'success': True, 'msgs': [], 'data': []}
         try:
             tcc = get_TuyaCloudClient(user_id)
         except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
+        res = self.load_devices(user_id, tcc)
+        return Response(res)
+
+    def load_devices(self, user_id, tcc):
+        result = {'success': True, 'msgs': [], 'data': []}
         cols = [f.name for f in TuyaDevices._meta.fields]
         for device in tcc.get_user_devices():
             row = {k: device[k] for k in cols if k in device}
@@ -184,9 +176,13 @@ class DevicesViewSet(viewsets.ViewSet):
             return Response(None, status.HTTP_400_BAD_REQUEST)
 
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
+        try:
+            tcc = get_TuyaCloudClient(user_id)
+        except (KeyError, TypeError) as e:
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
         match kw['cmd']:
             case 'status':
-                res = self.get_device_status(user_id, kw['device_uuid'])
+                res = self.get_device_status(user_id, kw['device_uuid'], tcc)
             case _:
                 return Response(None, status.HTTP_400_BAD_REQUEST)
         return Response(res)
@@ -201,18 +197,21 @@ class DevicesViewSet(viewsets.ViewSet):
         if 'device_uuid' not in kw or 'cmd' not in kw:
             return Response(None, status.HTTP_400_BAD_REQUEST)
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
-
+        try:
+            tcc = get_TuyaCloudClient(user_id)
+        except (KeyError, TypeError) as e:
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
         match kw['cmd']:
             case 'status':
-                res = self.set_device_status(user_id, kw['device_uuid'], request.data)
+                res = self.set_device_status(user_id, kw['device_uuid'], request.data, tcc)
             case 'rcc':
                 Response(request.data)
-                res = self.send_rcc(user_id, kw['device_uuid'], request.data)
+                res = self.send_rcc(user_id, kw['device_uuid'], request.data, tcc)
             case _:
                 return Response(None, status.HTTP_400_BAD_REQUEST)
         return Response(res)
 
-    def set_device_status(self, user_id, device_uuid, req):
+    def set_device_status(self, user_id, device_uuid, req, tcc):
         result = {'success': True, 'msgs': [], 'data': []}
         result['msgs'].append(f"do {inspect.stack()[0][3]} for {device_uuid}")
         commands = []
@@ -222,43 +221,22 @@ class DevicesViewSet(viewsets.ViewSet):
                 "value": req[key]
             })
         exec = {"commands": commands}
-        try:
-            tcc = get_TuyaCloudClient(user_id)
-        except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
         result['data'] = tcc.exec_device_command(device_uuid, exec)
         return result
 
-    def get_device_status(self, user_id, device_uuid):
+    def get_device_status(self, user_id, device_uuid, tcc):
         result = {'success': True, 'msgs': [], 'data': []}
         result['msgs'].append(f"do {inspect.stack()[0][3]} for {device_uuid}")
-
-        try:
-            tcc = get_TuyaCloudClient(user_id)
-        except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
         resp_raw = tcc.get_device_status(device_uuid)
-
         result['data'] = {}
         if list == type(resp_raw):
             for k in range(len(resp_raw)):
                 result['data'][resp_raw[k]['code']] = resp_raw[k]['value']
         return result
 
-    def send_rcc(self, user_id, device_uuid, req):
+    def send_rcc(self, user_id, device_uuid, req, tcc):
         result = {'success': True, 'msgs': [], 'data': []}
         result['msgs'].append(f"do {inspect.stack()[0][3]} for {device_uuid}")
-
-        try:
-            tcc = get_TuyaCloudClient(user_id)
-        except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
         command = {
             "category_id": req['category_id'],
             "remote_index": req['remote_index'],

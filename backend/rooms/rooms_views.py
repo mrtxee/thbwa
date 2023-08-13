@@ -18,10 +18,14 @@ class RoomsDevicesLoadViewSet(viewsets.ViewSet):
         if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
-        res = self.load_rooms_devices(user_id)
+        try:
+            tcc = get_TuyaCloudClient(user_id)
+        except (KeyError, TypeError) as e:
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
+        res = self.load_rooms_devices(user_id, tcc)
         return Response(res)
 
-    def load_rooms_devices(self, user_id):
+    def load_rooms_devices(self, user_id, tcc):
         result = {'success': True, 'msgs': [], 'data': []}
         home_ids = TuyaHomes.objects.filter(user=user_id).values('home_id')
         rooms = TuyaHomeRooms.objects.filter(home_id__in=home_ids).values('room_id', 'home_id')
@@ -32,12 +36,6 @@ class RoomsDevicesLoadViewSet(viewsets.ViewSet):
         else:
             TuyaDevices.objects.filter(home_id__in=home_ids).update(room_id=None)
             result['msgs'].append(f"'{str(list(home_ids))} house devices set room to null")
-        try:
-            tcc = get_TuyaCloudClient(user_id)
-        except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
         for room in rooms:
             room_devices = tcc.get_room_devices(room['home_id'], room['room_id'])
             try:
@@ -59,27 +57,22 @@ class RoomsLoadViewSet(viewsets.ViewSet):
         if not Token.objects.filter(key=request.META['HTTP_AUTHORIZATION'].split()[1]).exists():
             return Response('token not exists', status.HTTP_401_UNAUTHORIZED)
         user_id = Token.objects.get(key=request.META['HTTP_AUTHORIZATION'].split()[1]).user_id
-        res = self.load_rooms(user_id)
+        try:
+            tcc = get_TuyaCloudClient(user_id)
+        except (KeyError, TypeError) as e:
+            return Response('invalid tuya credentials', status.HTTP_422_UNPROCESSABLE_ENTITY)
+        res = self.load_rooms(user_id, tcc)
         return Response(res)
 
-    def load_rooms(self, user_id):
+    def load_rooms(self, user_id, tcc):
         result = {'success': True, 'msgs': [], 'data': []}
-
         homes = TuyaHomes.objects.filter(user=user_id).values('home_id')
         if 1 > homes.count():
             result['success'] = False
             result['msgs'].append(f"no homes found")
             return result
-        try:
-            tcc = get_TuyaCloudClient(user_id)
-        except (KeyError, TypeError) as e:
-            result['success'] = False
-            result['msgs'].append(f"Exception: {str(e)}")
-            return result
-
         TuyaHomeRooms.objects.filter(home_id__in=homes).delete()
         result['msgs'].append('rooms truncated')
-
         for h in homes:
             home_id = h['home_id']
             resp = tcc.get_home_rooms(home_id)
