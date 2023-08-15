@@ -1,0 +1,30 @@
+{
+  "files": {
+    "main.css": "/static/css/main.579198c1.css",
+    "main.js": "/static/js/main.df854e61.js",
+    "static/media/faq01.png": "/static/media/faq01.bae92ef0af82630a7a27.png",
+    "static/media/faq10.png": "/static/media/faq10.05946b903e45ca8c54e5.png",
+    "static/media/faq03.png": "/static/media/faq03.9874af799d3857d05ff5.png",
+    "static/media/faq07.png": "/static/media/faq07.38a70376d7b3c0f529d2.png",
+    "static/media/faq08.png": "/static/media/faq08.2dcbd366f4d76afc2361.png",
+    "static/media/faq06.png": "/static/media/faq06.5b314757b0198fdbc5a0.png",
+    "static/media/faq05.png": "/static/media/faq05.5f3697a76258d93542b9.png",
+    "static/media/faq09.png": "/static/media/faq09.771611d4ac0b92c61a81.png",
+    "static/media/1055675-support.png": "/static/media/1055675-support.a5f4b830190e6c3a1564.png",
+    "static/media/1055652-sourc.png": "/static/media/1055652-sourc.4ba6a0a21c0f25dc1bea.png",
+    "static/media/faq04.png": "/static/media/faq04.d80dd4466fa211175449.png",
+    "static/media/1055661-interf.png": "/static/media/1055661-interf.aa30d4a6f94e27ce2acc.png",
+    "static/media/app07.png": "/static/media/app07.309d59fd8702708e7e06.png",
+    "static/media/app03.png": "/static/media/app03.859c1ae8347bb943c9e7.png",
+    "static/media/1055687-crosspl.png": "/static/media/1055687-crosspl.6139123b7277538ac19b.png",
+    "static/media/user_spacer.png": "/static/media/user_spacer.6631502b97a9569e5822.png",
+    "static/media/app05.png": "/static/media/app05.e656a3b5903e09e03070.png",
+    "index.html": "/index.html",
+    "main.579198c1.css.map": "/static/css/main.579198c1.css.map",
+    "main.df854e61.js.map": "/static/js/main.df854e61.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.579198c1.css",
+    "static/js/main.df854e61.js"
+  ]
+}
