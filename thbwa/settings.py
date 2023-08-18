@@ -31,6 +31,15 @@ ALLOWED_HOSTS = ['*']
 
 # Application definition
 
+#EMAIL_USE_TLS = False
+EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = 'admin@tuyahome.online'
+EMAIL_HOST_PASSWORD = 'pwFVUQ3W7FcPL2vdhiLw'
+EMAIL_USE_SSL = True
+SERVER_EMAIL = "admin@tuyahome.online"
+DEFAULT_FROM_EMAIL = "admin@tuyahome.online"
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
