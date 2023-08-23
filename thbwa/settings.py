@@ -1,8 +1,13 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+dotenv_path = os.path.join(BASE_DIR, '.env')
+load_dotenv(dotenv_path)
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -24,21 +29,20 @@ CORS_ORIGIN_ALLOW_ALL = True
 #     'http://77.222.54.140', 'https://77.222.54.140',
 #
 # ]
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['127.0.0.1:8000','localhost:8000','127.0.0.1:3000','localhost:3000','*']
 
 # CSRF_COOKIE_NAME = "XSRF-TOKEN"
 # CSRF_COOKIE_NAME = "csrftoken"
 
 # Application definition
 
-#EMAIL_USE_TLS = False
-EMAIL_HOST = 'smtp.mail.ru'
 EMAIL_PORT = 465
-EMAIL_HOST_USER = 'admin@tuyahome.online'
-EMAIL_HOST_PASSWORD = 'pwFVUQ3W7FcPL2vdhiLw'
 EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'admin@tuyahome.online'
 SERVER_EMAIL = "admin@tuyahome.online"
 DEFAULT_FROM_EMAIL = "admin@tuyahome.online"
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
 INSTALLED_APPS = [
     'django.contrib.admin',
