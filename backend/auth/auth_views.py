@@ -5,19 +5,26 @@ from dataclasses import dataclass, asdict
 
 import requests
 from allauth import utils
+from allauth.account.adapter import get_adapter
+from allauth.account.forms import default_token_generator
+from allauth.account.utils import user_pk_to_url_str
 from allauth.socialaccount.models import SocialAccount
+from allauth.utils import build_absolute_uri
 from dacite import from_dict
 from django.contrib.auth import authenticate
+
+
 from django.contrib.auth.models import User
-from django.contrib.auth.views import PasswordResetView
+from django.contrib.sites.shortcuts import get_current_site
+
 from django.core import serializers
-from django.http import JsonResponse, HttpRequest
-from django.middleware.csrf import get_token
+from django.http import JsonResponse
 from dotenv import load_dotenv
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
 from main.models import UserSettings
 from thbwa import settings
@@ -53,39 +60,29 @@ class ResetPasswordViewSet(viewsets.ViewSet):
             return Response(None, status.HTTP_400_BAD_REQUEST)
         if not User.objects.filter(email=request.data['email']).exists():
             return Response('email is not registered', status.HTTP_417_EXPECTATION_FAILED)
-        # todo: make emailSendingCall here
+
         user = User.objects.get(email=request.data['email'])
+        email = request.data['email']
 
+        current_site = get_current_site(request)
+        token_generator = default_token_generator
         temp_key = token_generator.make_token(user)
-
-        # save it to the password reset model
-        # password_reset = PasswordReset(user=user, temp_key=temp_key)
-        # password_reset.save()
-
-        # send the password reset email
         path = reverse("account_reset_password_from_key",
                        kwargs=dict(uidb36=user_pk_to_url_str(user),
                                    key=temp_key))
-        url = build_absolute_uri(
-            request, path)
+        url = build_absolute_uri(request, path)
 
         context = {"current_site": current_site,
                    "user": user,
                    "password_reset_url": url,
                    "request": request}
-
-        if app_settings.AUTHENTICATION_METHOD \
-                != AuthenticationMethod.EMAIL:
-            context['username'] = user_username(user)
         get_adapter(request).send_mail(
             'account/email/password_reset_key',
             email,
             context)
-
-    #return self.cleaned_data["email"]
-
-        # todo: make new password via email confirmation form
-        return Response()
+        # todo: add username reminder
+        # todo: make new password  confirmation with react
+        return Response(path, status.HTTP_200_OK)
 
 
 class UniqueUserNameCheckerViewSet(viewsets.ViewSet):
