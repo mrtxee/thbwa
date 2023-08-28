@@ -5,18 +5,13 @@ from dataclasses import dataclass, asdict
 
 import requests
 from allauth import utils
-from allauth.account.adapter import get_adapter
 from allauth.account.forms import default_token_generator
 from allauth.account.utils import user_pk_to_url_str
 from allauth.socialaccount.models import SocialAccount
-from allauth.utils import build_absolute_uri
 from dacite import from_dict
 from django.contrib.auth import authenticate
-
-
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
-
 from django.core import serializers
 from django.http import JsonResponse
 from dotenv import load_dotenv
@@ -70,19 +65,30 @@ class ResetPasswordViewSet(viewsets.ViewSet):
         path = reverse("account_reset_password_from_key",
                        kwargs=dict(uidb36=user_pk_to_url_str(user),
                                    key=temp_key))
-        url = build_absolute_uri(request, path)
+        # url = build_absolute_uri(request, path)
+        url = current_site.domain + path
 
         context = {"current_site": current_site,
                    "user": user,
                    "password_reset_url": url,
                    "request": request}
-        get_adapter(request).send_mail(
-            'account/email/password_reset_key',
-            email,
-            context)
+        # get_adapter(request).send_mail(
+        #     'account/email/password_reset_key',
+        #     email,
+        #     context)
         # todo: add username reminder
+        return Response(url, status.HTTP_200_OK)
+
+    def put(self, request, *args, **kw):
+        if 'token' not in request.data or 'password' not in request.data:
+            return Response(None, status.HTTP_400_BAD_REQUEST)
         # todo: make new password  confirmation with react
-        return Response(path, status.HTTP_200_OK)
+        # if self.reset_user is None or not self.token_generator.check_token(
+        #     self.reset_user, key
+        # ):
+
+        # return Response("ResetPasswordConfirmViewSet done!", status.HTTP_200_OK)
+        return Response(request.data, status.HTTP_200_OK)
 
 
 class UniqueUserNameCheckerViewSet(viewsets.ViewSet):
@@ -191,6 +197,7 @@ class LoginViewSet(viewsets.ViewSet):
             userdata.picture = social_account[0]["extra_data"]["picture"]
         userdata.token = Token.objects.get_or_create(user_id=user.id)[0].key
         return Response(userdata.dict())
+    # todo: проверка, что такой имэйл еще не занят
 
     def list(self, request, *args, **kw):
         if 'HTTP_AUTHORIZATION' not in request.META:
@@ -224,7 +231,6 @@ class LogoutEverywhereViewSet(viewsets.ViewSet):
 
 class LoginGoogleViewSet(viewsets.ViewSet):
     def create(self, request):
-
         return JsonResponse(self._get_userdata_by_google_userinfo(
             requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers={
                 'Authorization': f'{request.data["token_type"]} {request.data["access_token"]}'}).json()).dict())

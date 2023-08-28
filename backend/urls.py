@@ -17,7 +17,8 @@ router = routers.DefaultRouter()
 +POST/api/v2.0/auth/register        # register; return token
 +POST/api/v2.0/auth/uniquecheck     # is username uniqu check; return bool
 +POST/api/v2.0/auth/newpass         # new password set
-+POST/api/v2.0/auth/resetpass       # send pw recovery email
++POST/api/v2.0/auth/resetpass       # send confirm for pw recovery email
++PUT /api/v2.0/auth/resetpass       # confirm new pw  by token
 +GET /api/v2.0/user                 # return user_data by token
 +POST/api/v2.0/user                 # update user_data by token
 +GET /api/v2.0/user/settings        # return user_settings by token
