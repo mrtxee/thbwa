@@ -5,8 +5,9 @@ from dataclasses import dataclass, asdict
 
 import requests
 from allauth import utils
+from allauth.account.adapter import get_adapter
 from allauth.account.forms import default_token_generator
-from allauth.account.utils import user_pk_to_url_str
+from allauth.account.utils import user_pk_to_url_str, url_str_to_user_pk
 from allauth.socialaccount.models import SocialAccount
 from dacite import from_dict
 from django.contrib.auth import authenticate
@@ -19,7 +20,6 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from rest_framework.reverse import reverse
 
 from main.models import UserSettings
 from thbwa import settings
@@ -59,36 +59,33 @@ class ResetPasswordViewSet(viewsets.ViewSet):
         user = User.objects.get(email=request.data['email'])
         email = request.data['email']
 
-        current_site = get_current_site(request)
-        token_generator = default_token_generator
-        temp_key = token_generator.make_token(user)
-        path = reverse("account_reset_password_from_key",
-                       kwargs=dict(uidb36=user_pk_to_url_str(user),
-                                   key=temp_key))
-        # url = build_absolute_uri(request, path)
-        url = current_site.domain + path
+        url = os.environ.get("FRONTEND_BASE_URL") + '/resetpass/' + user_pk_to_url_str(
+            user) + '-' + default_token_generator.make_token(user)
 
-        context = {"current_site": current_site,
+        context = {"current_site": get_current_site(request),
                    "user": user,
                    "password_reset_url": url,
                    "request": request}
-        # get_adapter(request).send_mail(
-        #     'account/email/password_reset_key',
-        #     email,
-        #     context)
+        get_adapter(request).send_mail(
+            'account/email/password_reset_key',
+            email,
+            context)
         # todo: add username reminder
-        return Response(url, status.HTTP_200_OK)
+        return Response(None, status.HTTP_200_OK)
 
     def put(self, request, *args, **kw):
-        if 'token' not in request.data or 'password' not in request.data:
+        if 'key' not in request.data or 'password' not in request.data:
             return Response(None, status.HTTP_400_BAD_REQUEST)
-        # todo: make new password  confirmation with react
-        # if self.reset_user is None or not self.token_generator.check_token(
-        #     self.reset_user, key
-        # ):
 
-        # return Response("ResetPasswordConfirmViewSet done!", status.HTTP_200_OK)
-        return Response(request.data, status.HTTP_200_OK)
+        user_pk_url_str, token = request.data['key'].split('-', maxsplit=1)
+        user = User.objects.get(pk=url_str_to_user_pk(user_pk_url_str))
+        if not default_token_generator.check_token(user, token):
+            return Response('bad token', status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(request.data['password'])
+        user.save()
+
+        return Response(None, status.HTTP_200_OK)
 
 
 class UniqueUserNameCheckerViewSet(viewsets.ViewSet):
@@ -197,6 +194,7 @@ class LoginViewSet(viewsets.ViewSet):
             userdata.picture = social_account[0]["extra_data"]["picture"]
         userdata.token = Token.objects.get_or_create(user_id=user.id)[0].key
         return Response(userdata.dict())
+
     # todo: проверка, что такой имэйл еще не занят
 
     def list(self, request, *args, **kw):
