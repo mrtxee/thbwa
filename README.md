@@ -22,6 +22,6 @@ https://tuyahome.online/
     
     deactivate # -- выйти из venv
 
-## настиойки приложения
+## настройки приложения
 - .env
 - thbwa/settings.py
