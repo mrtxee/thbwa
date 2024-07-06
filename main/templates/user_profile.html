@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block text %}
+{% load django_bootstrap5 %}
+
+{% if success_updated_alert %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <strong>Setting updated!</strong> Tuya cloud platform access settings updated successfully. You can now go to <a href="/devices" class="alert-link">devices screen</a> to reload you devices, rooms & houses.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+{% endif %}
+{% if fill_form_alert %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Form data provided problem.</strong> Fill form correctly
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+{% endif %}
+
+<div class="row">
+  <div class="col-sm-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Profile</h5>
+        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" class="rounded mx-auto d-block mb-4 mt-3" alt="{{ user.username }}">
+        <h5 class="card-title">{{ user.socialaccount_set.all.0.extra_data.name }}</h5>
+        <p class="card-text">
+            Login: {{ user.username }}
+            <br/>
+            Date Joined: {{ user.socialaccount_set.all.0.date_joined}}
+            <br/>
+            Last Login: {{ user.socialaccount_set.all.0.last_login}}
+        </p>
+        <p class="card-text"><small class="text-muted">UID: {{ user.socialaccount_set.all.0.uid }}</small></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-8">
+    <div class="card">
+      <div class="card-body">
+
+        <h5 class="card-title">Settings</h5>
+        <h6 class="card-subtitle mb-2 text-muted">Tuya cloud platform access settings</h6>
+        <form action="./" method="post" class="form">
+          {% csrf_token %}  
+            {% bootstrap_form form %}
+          <button type="submit" class="btn btn-primary">Save settings</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+{% endblock %}

@@ -1,13 +1,11 @@
-import os
 from pathlib import Path
+import os
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_path = os.path.join(BASE_DIR, '.env')
 load_dotenv(dotenv_path)
-
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -16,19 +14,9 @@ load_dotenv(dotenv_path)
 SECRET_KEY = 'django-insecure-=z^o$spdg7a6$p!smi9vv49s9_0^3*ko%y(uu#2*6h1uf%*j!m'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-# CSRF protection policy
-CORS_ORIGIN_ALLOW_ALL = True
-
-# CSRF protection policy
-CORS_ALLOWED_ORIGINS = [
-    'http://127.0.0.1:3000', 'http://localhost:3000',
-    'http://127.0.0.1:8000', 'http://localhost:8000',
-    'http://77.222.54.140', 'https://77.222.54.140',
-    'http://tuyahome.online','https://tuyahome.online',
-    'http://tuyahome.online:90', 'https://tuyahome.online:90'
-]
-ALLOWED_HOSTS = ['127.0.0.1:8000','localhost:8000','127.0.0.1:3000','localhost:3000','tuyahome.online','tuyahome.online:90','*']
+DEBUG = False
+#CORS_ORIGIN_ALLOW_ALL = DEBUG
+ALLOWED_HOSTS = ['*']
 
 # CSRF_COOKIE_NAME = "XSRF-TOKEN"
 # CSRF_COOKIE_NAME = "csrftoken"
@@ -76,6 +64,7 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -89,8 +78,7 @@ ROOT_URLCONF = 'thbwa.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'frontend'),
-                 BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -152,11 +140,24 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'static'
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, "frontend", "build", "static"),
-)
+#STATIC_URL = 'static/'
+#STATIC_ROOT = BASE_DIR / 'static'
+
+if DEBUG:
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'core/static/'),
+    ]
+    STATIC_URL = 'static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
+    MEDIA_URL = '/media/'  
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
+else:
+    MEDIA_ROOT = '/var/www/thbwa/media'
+    MEDIA_URL = '/media/'
+    STATIC_ROOT = '/var/www/thbwa/static'
+    STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
