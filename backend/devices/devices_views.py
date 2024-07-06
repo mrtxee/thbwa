@@ -87,7 +87,8 @@ class DevicesFunctionsLoadViewSet(viewsets.ViewSet):
             cols = [f.name for f in TuyaDeviceFunctions._meta.fields]
             row = {k: resp[k] for k in cols if k in resp}
             row['product_id'] = device['product_id']
-            row['status'] = device['payload']['status']
+            if 'status' in device['payload']:
+                row['status'] = device['payload']['status']
             row['category'] = device['category']
             row['payload'] = resp
             if not 'functions' in row:
@@ -99,27 +100,28 @@ class DevicesFunctionsLoadViewSet(viewsets.ViewSet):
                             row['functions'][k]['values'] = json.loads(row['functions'][k]['values'])
                         except (TypeError, ValueError):
                             pass
-            if type(row['status']) == list:
-                for k in range(len(row['status'])):
-                    if row['status'][k]['value']:
-                        try:
-                            row['status'][k]['value'] = json.loads(row['status'][k]['value'])
-                            # result['msgs'].append(f"{row['product_id']} json value status found")
-                        except (TypeError, ValueError):
-                            pass
-            function_codes = []
-            if 0 < len(row['functions']):
-                function_codes = [row['functions'][j]['code'] for j in range(len(row['functions']))]
-            if 0 < len(row['status']):
-                for st in row['status']:
-                    if st['code'] not in function_codes:
-                        row['functions'].append({
-                            'code': st['code'],
-                            'desc': st['code'],
-                            'name': st['code'],
-                            'type': "Readonly",
-                            'values': {}
-                        })
+            if 'status' in row:
+                if type(row['status']) == list:
+                    for k in range(len(row['status'])):
+                        if row['status'][k]['value']:
+                            try:
+                                row['status'][k]['value'] = json.loads(row['status'][k]['value'])
+                                # result['msgs'].append(f"{row['product_id']} json value status found")
+                            except (TypeError, ValueError):
+                                pass
+                function_codes = []
+                if 0 < len(row['functions']):
+                    function_codes = [row['functions'][j]['code'] for j in range(len(row['functions']))]
+                if 0 < len(row['status']):
+                    for st in row['status']:
+                        if st['code'] not in function_codes:
+                            row['functions'].append({
+                                'code': st['code'],
+                                'desc': st['code'],
+                                'name': st['code'],
+                                'type': "Readonly",
+                                'values': {}
+                            })
             if not TuyaDeviceFunctions.objects.filter(product_id=device['product_id']).exists():
                 obj = TuyaDeviceFunctions.objects.create(**row)
                 result['msgs'].append(f'record {device["product_id"]} created')
